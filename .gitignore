@@ -1,0 +1,6 @@
+*.o
+*.out
+game
+.DS_Store
+Thumbs.db
+.vscode/

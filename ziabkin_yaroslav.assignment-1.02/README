@@ -1,0 +1,2 @@
+For this assignment, I used a method where seeds of different terrain types are randomly placed on the map, and then they grow, each being added to a queue.The roads are designed in such a way that they first go in the direction of their exit point, and then there is a 90-degree turn where they meet in pairs, south with north and east with west.
+Pokemart and pokecenter are placed near by each vertical or horizontal road which connect respective exits.To run, write "make", "./map_generator" in your terminal.

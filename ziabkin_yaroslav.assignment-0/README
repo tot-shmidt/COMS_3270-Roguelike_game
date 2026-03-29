@@ -1,0 +1,3 @@
+My project meets the assignment requirements because it provides the required result.
+I use a recursive function with backtracking that processes all possible options,
+and outputs the successful knight's tours for each square of the chessboard to the terminal console.

@@ -1,0 +1,8 @@
+February 3: Started working. Created queue data structure.
+February 4: was able to print maps without roads, exits and poke buildings.
+February 5: created roads and connected them. Placed pokemart and pokecenter on the map.
+February 14: chandeg walls type
+February 16: added PC and NPC to the game
+February 17: added a function for finding cost of a terrain
+February 21: created min heap data structure
+February 22: implementd Dijkstra's algorithm

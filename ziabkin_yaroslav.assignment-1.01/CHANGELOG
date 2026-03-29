@@ -1,0 +1,7 @@
+February 3: Started working. Created queue data structure.
+February 4: was able to print maps without roads, exits and poke buildings.
+February 5: created roads and connected them. Placed pokemart and pokecenter on the map.
+February 7: started 1.02. Finished world handling and moving (s,n,e,w) and (f).
+February 8: finished synchronization of exits with respect to neighbors.
+February 9: finished logic for road intersection near edges of the world. Implemented logic for
+random spawn of pokemart and pokecenter depending on the given function.
