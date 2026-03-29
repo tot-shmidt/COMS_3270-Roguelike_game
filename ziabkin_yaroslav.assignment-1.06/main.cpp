@@ -23,7 +23,7 @@ void init_ncurses() {
 }
 
 // This one takes PC as a parameter, so can print a map with it
-void display_map_with_pc(struct map *current_map, struct world *this_world, struct entity *pc) {
+void display_map_with_pc(map *current_map, struct world *this_world, Player *pc) {
     int i, j;
 
     for (i = 0; i < MAP_HEIGHT; i++) {
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     create_map(&first_map, &this_world, npc_num);
 
 // 2. Create PC
-    struct entity pc;
+    Player pc;
     initialize_entity(&pc, PC);
     place_pc_on_road(&pc, &first_map);
 
