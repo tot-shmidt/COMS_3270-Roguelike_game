@@ -87,9 +87,9 @@ int create_exit(struct map *new_map, enum directions direction, struct world *th
     }
 }
 
-int create_npcs(struct map *new_map, int npc_num) {
+int create_npcs(map *new_map, int npc_num) {
     // 1. Allocate enough space for entity_array of map struct, to keep all entitiy pointers.
-    new_map->entity_array = (struct entity *) malloc(sizeof (struct entity) * npc_num);
+    new_map->entity_array = (NPC **) malloc(sizeof (NPC *) * npc_num);
     new_map->entity_num = npc_num;
 
     // 2. Initialize entity_map will NULL.
@@ -124,8 +124,11 @@ int create_npcs(struct map *new_map, int npc_num) {
             }
         }
 
+        // Create NPC object in memory.
+        new_map->entity_array[i] = new NPC();
+
         // Initialize this entity. Send the address of current memmory slot of entity in entity_array.
-        initialize_entity(new_map->entity_array + i, entity_type);
+        initialize_npc(new_map->entity_array[i], entity_type);
 
         // 4. Find place for this new entity on the map->entity_map
         int new_x, new_y;
@@ -156,12 +159,12 @@ int create_npcs(struct map *new_map, int npc_num) {
 
         // A->B is 100% identical to (*A).B
         // A[i] is 100% identical to *(A + i).
-        (*((*new_map).entity_array + i)).y = new_y; // de-sugared "new_map->entity_array[i].y = new_y;"
-        (*((*new_map).entity_array + i)).x = new_x;
+        new_map->entity_array[i]->y = new_y;
+        new_map->entity_array[i]->x = new_x;
 
         // Put this new entity into our 2D entity_map for collisions.
         // sugar: new_map->entity_map[new_y][new_x] = &(new_map->entity_array[i]);
-        *(*((*new_map).entity_map + new_y) + new_x) = (*new_map).entity_array + i;
+        new_map->entity_map[new_y][new_x] = new_map->entity_array[i];
     }
 
     return 0;

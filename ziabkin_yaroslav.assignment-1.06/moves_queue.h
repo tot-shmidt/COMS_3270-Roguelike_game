@@ -6,7 +6,7 @@
 struct queue_node {
     int current_time;
 
-    struct entity *entity;
+    Character *entity;
 };
 
 struct moves_queue {

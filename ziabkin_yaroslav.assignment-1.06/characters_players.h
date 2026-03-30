@@ -41,10 +41,11 @@ class NPC : public Character {
 };
 
 int place_pc_on_road(Player *pc, map *current_map);
-int initialize_entity(Character *entity, enum entity_type type);
+int initialize_pc(Player *player);
+int initialize_npc(NPC *npc, enum entity_type type);
 int calculate_cost(enum entity_type e_type, enum terrain_types t_type);
-void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_HEIGHT][MAP_WIDTH], map *current_map);
+void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_HEIGHT][MAP_WIDTH], map *map);
 void print_dist_map(enum entity_type npc_type, int distance_map[MAP_HEIGHT][MAP_WIDTH]);
-int move_npc(NPC *entity, map *current_map, Player *pc);
+int move_npc(NPC *entity, map *map, Player *pc);
 
 #endif

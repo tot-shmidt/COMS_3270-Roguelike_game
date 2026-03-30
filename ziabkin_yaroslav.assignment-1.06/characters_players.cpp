@@ -6,7 +6,7 @@
 #include <limits.h>
 
 
-int place_pc_on_road(struct entity *pc, struct map *map) {
+int place_pc_on_road(Player *pc, map *current_map) {
     int latitude;   // row
     int j;          // column
 
@@ -14,7 +14,7 @@ int place_pc_on_road(struct entity *pc, struct map *map) {
         latitude = (rand() % (MAP_HEIGHT - 2)) + 1;
 
         for (j = 1; j <= MAP_WIDTH - 2; j++) {
-            if (map->grid_array[latitude][j] == ROAD && map->entity_map[latitude][j] == NULL) {
+            if (current_map->grid_array[latitude][j] == ROAD && current_map->entity_map[latitude][j] == NULL) {
                 pc->x = j;
                 pc->y = latitude;
 
@@ -49,37 +49,34 @@ void print_dist_map(enum entity_type npc_type, int distance_map[MAP_HEIGHT][MAP_
     printf("\n");
 }
 
-int initialize_entity(struct entity *entity, enum entity_type type) {
-    entity->x = -1;
-    entity->y = -1;
-
-    entity->type = type;
+// Function just for the PC
+int initialize_pc(Player *player) {
+    player->x = -1;
+    player->y = -1;
+    player->type = PC;
+    player->temp = 0;
     
-    if (type == PC) {
-        entity->pc = (struct pc_data*) malloc (sizeof (struct pc_data));
-        
-        // Temporary
-        entity->pc->temp = 0;
-        entity->npc = NULL;
-    } else {
-        // Temporary initialization for all PCs
-        entity->npc = (struct npc_data*) malloc(sizeof (struct npc_data));
-        entity->pc = NULL;
-        entity->npc->temp = 0;
-        entity->npc->direction = (enum directions) (rand() % 8);
-        entity->npc->defeated = 0;
+    return 0;
+}
 
-        entity->npc->direction = (enum directions) (rand() % 8); 
-    }
-
+// Function just for the NPCs
+int initialize_npc(NPC *npc, enum entity_type type) {
+    npc->x = -1;
+    npc->y = -1;
+    npc->type = type;
+    
+    // No more mallocs! The memory already exists thanks to 'new NPC()'
+    npc->direction = (enum directions) (rand() % 8);
+    npc->defeated = 0;
+    
     return 0;
 }
 
 /*  This function has to change position of NPC and return cost of that step.
  */
-int move_npc(struct entity *entity, struct map *map, struct entity *pc) {
+int move_npc(NPC *entity, map *map, Player *pc) {
     // Freze if defeated
-    if (entity->type != PC && entity->npc->defeated == 1) {
+    if (entity->type != PC && entity->defeated == 1) {
         return WAIT_COST; 
     }
 
@@ -201,7 +198,7 @@ int move_npc(struct entity *entity, struct map *map, struct entity *pc) {
 
         case PACER: {
             // Get current direction
-            enum directions current_direction = (*((*entity).npc)).direction;
+            enum directions current_direction = entity->direction;
 
             // Get new cell with offset of current direction
             check_y = current_y + dir_arr_y[current_direction];
@@ -236,7 +233,7 @@ int move_npc(struct entity *entity, struct map *map, struct entity *pc) {
                 // If cell is empty and step cost is not INFINITY(reachable)
                 if (map->entity_map[check_y][check_x] == NULL && neigbor_cost != INFINITY) {
                     // We can return to the previous cell.
-                    entity->npc->direction = new_direction;
+                    entity->direction = new_direction;
                     new_y = check_y;
                     new_x = check_x;
                     min_cost = neigbor_cost;
@@ -256,7 +253,7 @@ int move_npc(struct entity *entity, struct map *map, struct entity *pc) {
         case WANDERER: {
             // get WANDERER's terrain and direction
             enum terrain_types first_terrain = (enum terrain_types) map->grid_array[current_y][current_x];
-            enum directions current_direction = entity->npc->direction;
+            enum directions current_direction = entity->direction;
             
             // Get new cell with offset of current direction
             check_y = current_y + dir_arr_y[current_direction];
@@ -292,7 +289,7 @@ int move_npc(struct entity *entity, struct map *map, struct entity *pc) {
                     
                     // If true, we can move there.
                     if (next_terrain == first_terrain) {
-                        entity->npc->direction = new_direction;
+                        entity->direction = new_direction;
 
                         // If that cell is not occupied.
                         if (map->entity_map[check_y][check_x] == NULL) {
@@ -319,7 +316,7 @@ int move_npc(struct entity *entity, struct map *map, struct entity *pc) {
             return WAIT_COST;
             break;
         case EXPLORER: {
-            enum directions current_direction = entity->npc->direction;
+            enum directions current_direction = entity->direction;
 
             check_y = current_y + dir_arr_y[current_direction];
             check_x = current_x + dir_arr_x[current_direction];
@@ -350,7 +347,7 @@ int move_npc(struct entity *entity, struct map *map, struct entity *pc) {
                     neigbor_cost = calculate_cost(EXPLORER, next_terrain);
                     
                     if (neigbor_cost != INFINITY) {
-                        entity->npc->direction = new_direction;
+                        entity->direction = new_direction;
 
                         if (map->entity_map[check_y][check_x] == NULL) {
                             new_x = check_x;
@@ -460,7 +457,7 @@ int calculate_cost(enum entity_type e_type, enum terrain_types t_type) {
     return 0;
 }
 
-void find_distance_map(struct entity *pc, enum entity_type npc_type, int distance[MAP_HEIGHT][MAP_WIDTH], struct map *map) {
+void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_HEIGHT][MAP_WIDTH], map *map) {
     // Initialize priority queue.
     struct min_heap priority_queue;
     initialize_min_heap(&priority_queue);

@@ -24,11 +24,11 @@ class map {
         // ~~~ NPC/PC managment ~~~
 
         // Array to store all the NPCs pointers on the current map and total number of NPC.
-        Character* entity_array;
+        NPC** entity_array;
         int entity_num;
 
         // 2D array to store locations of all the NPCs(not PC)
-        Character* entity_map[MAP_HEIGHT][MAP_WIDTH];
+        NPC* entity_map[MAP_HEIGHT][MAP_WIDTH];
 
         // Hiker and Rival distance maps
         int hiker_dist_map[MAP_HEIGHT][MAP_WIDTH];

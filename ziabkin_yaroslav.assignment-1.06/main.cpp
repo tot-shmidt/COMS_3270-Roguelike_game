@@ -69,13 +69,13 @@ int main(int argc, char *argv[]) {
 
 // 1. Create world and first map.
     struct world this_world;
-    struct map first_map;
+    map first_map;
     initialize_world(&this_world, &first_map);
     create_map(&first_map, &this_world, npc_num);
 
 // 2. Create PC
     Player pc;
-    initialize_entity(&pc, PC);
+    initialize_pc(&pc);
     place_pc_on_road(&pc, &first_map);
 
 // 3. Initialize moves_queue and populate it with all PC and NPC
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < first_map.entity_num; i++) {
         struct queue_node npc_node;
         npc_node.current_time = 0;
-        npc_node.entity = first_map.entity_array + i;
+        npc_node.entity = *(first_map.entity_array + i);
         mq_insert_node(&moves_queue, npc_node);
     }
     
@@ -250,7 +250,7 @@ int main(int argc, char *argv[]) {
                             // Loop through entities array
                             int i;
                             for (i = current_scroll; i < first_map.entity_num && i < current_scroll + rows_for_trainers; i++) {
-                                struct entity *npc = &first_map.entity_array[i];
+                                Character *npc = first_map.entity_array[i];
 
                                 int delta_x = pc.x - npc->x;
                                 int delta_y = pc.y - npc->y;
@@ -335,10 +335,10 @@ int main(int argc, char *argv[]) {
                     }
                     // Check if we encountered a trainer
                     else if (first_map.entity_map[new_y][new_x] != NULL) {
-                        struct entity *bumped_npc = first_map.entity_map[new_y][new_x];
+                        NPC *bumped_npc = (NPC *) first_map.entity_map[new_y][new_x];
                         
                         // If not defeated - battle
-                        if (bumped_npc->npc->defeated == 0) {
+                        if (bumped_npc->defeated == 0) {
                             mvprintw(0, 0, "Battle! Press 'Esc' to exit.");
                             refresh();
 
@@ -346,7 +346,7 @@ int main(int argc, char *argv[]) {
                                 ;
                             }
                             
-                            bumped_npc->npc->defeated = 1;
+                            bumped_npc->defeated = 1;
                             
                             clear();
                             display_map_with_pc(&first_map, &this_world, &pc);
@@ -371,9 +371,11 @@ int main(int argc, char *argv[]) {
             deq_node.current_time += next_step_cost;
 
             // Insert updated node back in the priority queue.
-            mq_insert_node(&moves_queue, deq_node); 
+            mq_insert_node(&moves_queue, deq_node);
+        
+        // This is not PC
         } else {
-            int step_cost = move_npc(deq_node.entity, &first_map, &pc);
+            int step_cost = move_npc((NPC *) deq_node.entity, &first_map, &pc);
 
             if (step_cost == -1) {
                 mvprintw(0, 0, "Trainer got you! Press 'Esc' to exit");
@@ -383,7 +385,7 @@ int main(int argc, char *argv[]) {
                     ;
                 }
                 
-                deq_node.entity->npc->defeated = 1;
+                ((NPC *)deq_node.entity)->defeated = 1;
                 step_cost = WAIT_COST;
                 
                 clear();
