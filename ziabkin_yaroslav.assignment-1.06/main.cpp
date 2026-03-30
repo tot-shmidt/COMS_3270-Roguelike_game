@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
     initialize_pc(&pc);
     place_pc_on_road(&pc, &first_map);
 
-// 3. Initialize moves_queue and populate it with all PC and NPC
+// 3. Initialize moves_queue and populate it with all PC and NPC. Small change.
     struct moves_queue moves_queue;
     initialize_moves_queue(&moves_queue, npc_num + 1);
 
