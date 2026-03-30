@@ -134,9 +134,9 @@ int create_npcs(map *new_map, int npc_num) {
         int new_x, new_y;
 
         do {
-            // Random potential x and y coordinates.
-            new_x = (rand() % (MAP_WIDTH - 2)) + 1;
-            new_y = (rand() % (MAP_HEIGHT - 2)) + 1;
+            // Random potential x and y coordinates. Offset of border + 1 step from each side.
+            new_x = (rand() % (MAP_WIDTH - 4)) + 2;
+            new_y = (rand() % (MAP_HEIGHT - 4)) + 2;
 
             // Check if this cell is valid for npc placement.
             int empty_cell;
