@@ -20,34 +20,62 @@ void init_ncurses() {
 
     // Create color pairs like in Prof. Sheafeer's code.
     init_pair(COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
+    init_pair(COLOR_YELLOW, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
+    init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
+    init_pair(10, COLOR_WHITE, COLOR_RED);
+    init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
+    init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
 }
 
 // This one takes PC as a parameter, so can print a map with it
-void display_map_with_pc(struct map *current_map, struct world *this_world, struct entity *pc) {
+void display_map_with_pc(map *current_map, struct world *this_world, Player *pc) {
     int i, j;
 
     for (i = 0; i < MAP_HEIGHT; i++) {
         for (j = 0; j < MAP_WIDTH; j++) {
-            // If true, we are at the cell where PC is currently located. Print it.
+            
+            // 1. Check for the PC
             if (pc->x == j && pc->y == i) {
-                // I add 1 to i as we need to reserve frist row for other stuff
-                mvaddch(i + 1, j, PC);
-            // Print impassible BOULDERS. Internally boulder is 'b' but we draw it as mountains '%', so they look the same.
-            } else if (current_map->grid_array[i][j] == BOULDER) {
-                mvaddch(i + 1, j, '%');
-            // Print NPC entities
+                mvaddch(i + 1, j, PC | COLOR_PAIR(10));
+            
+            // 2. Check for NPCs
             } else if (current_map->entity_map[i][j] != NULL) {
-                mvaddch(i + 1, j, current_map->entity_map[i][j]->type);
-            // Print emtpty terrain.
+                mvaddch(i + 1, j, current_map->entity_map[i][j]->type | COLOR_PAIR(COLOR_WHITE));
+            
+            // 3. Otherwise, draw the colored terrain
             } else {
-                mvaddch(i + 1, j, current_map->grid_array[i][j]);
+                char terrain_char = current_map->grid_array[i][j];
+                int color_to_use;
+
+                // Decide which color pair to use based on the character
+                switch(terrain_char) {
+                    case BOULDER:
+                    case '%':
+                        terrain_char = '%'; 
+                        color_to_use = COLOR_MAGENTA;
+                        break;
+                    case '^': color_to_use = COLOR_GREEN; break;
+                    case '#': color_to_use = COLOR_YELLOW; break;
+                    case ':':
+                    case '.':
+                        color_to_use = COLOR_GREEN; break;
+                    case '~': color_to_use = COLOR_BLUE; break;
+                    case 'C': 
+                    case 'M': color_to_use = COLOR_CYAN; break;
+                    default:  color_to_use = COLOR_CYAN; break;
+                }
+
+                // Print the character with its assigned color!
+                mvaddch(i + 1, j, terrain_char | COLOR_PAIR(color_to_use));
             }
         }
     }
 
+    // White default color for text
     mvprintw(0, 0, "Coordinates of this map: (%d, %d)", this_world->current_map_x - 200, this_world->current_map_y - 200);
 
-    // Move changes from ncurses buffer to the terminal screen.
     refresh();
 }
 
@@ -69,36 +97,24 @@ int main(int argc, char *argv[]) {
 
 // 1. Create world and first map.
     struct world this_world;
-    struct map first_map;
-    initialize_world(&this_world, &first_map);
-    create_map(&first_map, &this_world, npc_num);
+    map *current_map = (map *) malloc(sizeof(map));
+    initialize_world(&this_world, current_map);
+    create_map(current_map, &this_world, npc_num);
 
 // 2. Create PC
-    struct entity pc;
-    initialize_entity(&pc, PC);
-    place_pc_on_road(&pc, &first_map);
+    Player pc;
+    initialize_pc(&pc);
+    place_pc_on_road(&pc, current_map);
 
-// 3. Initialize moves_queue and populate it with all PC and NPC
-    struct moves_queue moves_queue;
-    initialize_moves_queue(&moves_queue, npc_num + 1);
-
-    // Insert PC
+// 3. Insert PC
     struct queue_node pc_node;
     pc_node.current_time = 0;
     pc_node.entity = &pc;
-    mq_insert_node(&moves_queue, pc_node);
-
-    // Insert everybody else
-    for (i = 0; i < first_map.entity_num; i++) {
-        struct queue_node npc_node;
-        npc_node.current_time = 0;
-        npc_node.entity = first_map.entity_array + i;
-        mq_insert_node(&moves_queue, npc_node);
-    }
+    mq_insert_node(&(current_map->queue), pc_node);
     
     // Find initial dstance maps
-    find_distance_map(&pc, HIKER, first_map.hiker_dist_map, &first_map);
-    find_distance_map(&pc, RIVAL, first_map.rival_dist_map, &first_map);
+    find_distance_map(&pc, HIKER, current_map->hiker_dist_map, current_map);
+    find_distance_map(&pc, RIVAL, current_map->rival_dist_map, current_map);
 
 // 4. Initialize ncureses
     init_ncurses();
@@ -109,14 +125,14 @@ int main(int argc, char *argv[]) {
     while (!quit_game) {
         // Extract node with minimum current_time
         struct queue_node deq_node;
-        mq_extract_min(&moves_queue, &deq_node);
+        mq_extract_min(&(current_map->queue), &deq_node);
 
         // Find if current entity PC or NPC
         enum entity_type deq_entity_type = deq_node.entity->type;
 
         // Do action based on entity type
         if (deq_entity_type == PC) {
-            display_map_with_pc(&first_map, &this_world, &pc);
+            display_map_with_pc(current_map, &this_world, &pc);
 
             int successful_move = 0;
 
@@ -178,11 +194,65 @@ int main(int argc, char *argv[]) {
                     case 'q':
                     case 'Q':
                         quit_game = 1; successful_move = 1; break;
+
+                    // Fly somewhere
+                    case 'f': {
+                        int fly_y, fly_x;
+                        
+                        mvprintw(0, 0, "Provide \"x y\" to fly: ");
+                        refresh();
+
+                        echo();
+                        scanw("%d %d", &fly_x, &fly_y); // ncurses version of scanf
+                        noecho();                    
+                        
+                        int next_map_x = 200 + fly_x;
+                        int next_map_y = 200 + fly_y;
+
+                        if (next_map_x < 0 || next_map_y < 0 || next_map_x >= WORLD_WIDTH || next_map_y >= WORLD_HEIGHT) {
+                            mvprintw(0, 0, "Moving out off bounds of the world!\n");
+                            refresh();
+                        } else {
+                            // Update coordinates of current map in the world. 
+                            this_world.current_map_x = next_map_x;
+                            this_world.current_map_y = next_map_y;
+
+                            // If next map does not exist - build it.
+                            if (this_world.world_maps[next_map_y][next_map_x] == NULL) {
+                                this_world.world_maps[next_map_y][next_map_x] = (map *) malloc(sizeof(map));
+                                
+                                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world, (rand() % 10) + 2); 
+                            }
+                            
+                            // Aim pointer
+                            current_map = this_world.world_maps[next_map_y][next_map_x];
+
+                            // Synchronize time of PC and NPCs in the next map.
+                            if (current_map->queue.current_size > 0) {
+                                struct queue_node sync_node;
+
+                                // Extract NPC on the next map
+                                mq_extract_min(&(current_map->queue), &sync_node);
+                                deq_node.current_time = sync_node.current_time;
+                                mq_insert_node(&(current_map->queue), sync_node);
+                            } else {
+                                deq_node.current_time = 0;
+                            }
+                            
+                            // Place pc on a new map.
+                            place_pc_on_road(&pc, current_map);
+                            
+                            successful_move = 1;
+                        }
+
+                        break;
+                    }
+
                     // Enter poke-building
                     case '>':
-                        if (first_map.grid_array[pc.y][pc.x] == POK_CENTER || first_map.grid_array[pc.y][pc.x] == POK_MART) {
+                        if (current_map->grid_array[pc.y][pc.x] == POK_CENTER || current_map->grid_array[pc.y][pc.x] == POK_MART) {
                             clear();
-                            mvprintw(0, 0, "Inside %c building. Press '<' to exit.", first_map.grid_array[pc.y][pc.x]);
+                            mvprintw(0, 0, "Inside %c building. Press '<' to exit.", current_map->grid_array[pc.y][pc.x]);
                             refresh();
 
                             // Loading bar variables
@@ -217,7 +287,7 @@ int main(int argc, char *argv[]) {
 
                             // Redraw the map
                             clear();
-                            display_map_with_pc(&first_map, &this_world, &pc);
+                            display_map_with_pc(current_map, &this_world, &pc);
                         } else {
                             mvprintw(0, 0, "You have to stand on a poke-building!");
                             refresh();
@@ -249,8 +319,8 @@ int main(int argc, char *argv[]) {
 
                             // Loop through entities array
                             int i;
-                            for (i = current_scroll; i < first_map.entity_num && i < current_scroll + rows_for_trainers; i++) {
-                                struct entity *npc = &first_map.entity_array[i];
+                            for (i = current_scroll; i < current_map->entity_num && i < current_scroll + rows_for_trainers; i++) {
+                                Character *npc = current_map->entity_array[i];
 
                                 int delta_x = pc.x - npc->x;
                                 int delta_y = pc.y - npc->y;
@@ -300,7 +370,7 @@ int main(int argc, char *argv[]) {
                                     }
                                     break;
                                 case KEY_DOWN:
-                                    if (current_scroll + rows_for_trainers < first_map.entity_num) {
+                                    if (current_scroll + rows_for_trainers < current_map->entity_num) {
                                         current_scroll++;
                                     }
                                     break;
@@ -308,7 +378,7 @@ int main(int argc, char *argv[]) {
                         }
 
                         clear();
-                        display_map_with_pc(&first_map, &this_world, &pc);
+                        display_map_with_pc(current_map, &this_world, &pc);
                         break;
 
                     }
@@ -321,11 +391,132 @@ int main(int argc, char *argv[]) {
                 // Check if move key was pressed.
                 if (pc.x != new_x || pc.y != new_y) {
                     // get cost of new terrain for pc.
-                    int terrain_cost = calculate_cost(PC, (enum terrain_types) first_map.grid_array[new_y][new_x]);
+                    int terrain_cost = calculate_cost(PC, (enum terrain_types) current_map->grid_array[new_y][new_x]);
 
-                    // Check borders.
-                    if (new_x == MAP_WIDTH - 1 || new_x == 0 || new_y == 0 || new_y == MAP_HEIGHT - 1) {
-                        mvprintw(0, 0, "Going out of bounds.");
+                    //  ~~~ Check if we move to a gate ~~~
+                    enum directions gate_direction;
+                    int next_map_y = this_world.current_map_y;
+                    int next_map_x = this_world.current_map_x;
+
+                    // if our next cell is a gate.
+                    if ((new_x == MAP_WIDTH - 1 || new_x == 0 || new_y == 0 || new_y == MAP_HEIGHT - 1) && ((enum terrain_types) current_map->grid_array[new_y][new_x]) == ROAD) { 
+                        // I have to find if we are going N,E,S or W.
+                        if (new_x == MAP_WIDTH - 1) {
+                            // Going East
+                            gate_direction = EAST;
+                            next_map_x++;
+                        } else if (new_x == 0) {
+                            // Going West
+                            gate_direction = WEST;
+                            next_map_x--;
+                        } else if (new_y == 0) {
+                            // Going North
+                            gate_direction = NORTH;
+                            next_map_y--;
+                        } else if (new_y == MAP_HEIGHT - 1) {
+                            // Going South
+                            gate_direction = SOUTH;
+                            next_map_y++;
+                        } else {
+                            mvprintw(0, 0, "Something went wrong with gates");
+                            refresh();
+                            break;
+                        }
+
+                        // Check if new map is not out of the bounds of the world.
+                        if (next_map_x >= WORLD_WIDTH || next_map_x < 0 || next_map_y >= WORLD_HEIGHT || next_map_y < 0) {
+                            mvprintw(0, 0, "Moving out off bounds of the world!\n");
+                            refresh();
+                        // If here, we are not going ouside of the world.
+                        } else {
+                            // Update coordinates of current map in the world. 
+                            this_world.current_map_x = next_map_x;
+                            this_world.current_map_y = next_map_y;
+
+                            // Coordinates of PC before entering the gate
+                            //int old_x = pc.x;
+                            //int old_y = pc.y;
+
+                            // If next map does not exist.
+                            if (this_world.world_maps[next_map_y][next_map_x] == NULL) {
+
+                                this_world.world_maps[next_map_y][next_map_x] = (map *) malloc(sizeof(map));
+                                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world, (rand() % 10) + 2);
+
+                                // Make new map as our current map.
+                                current_map = this_world.world_maps[next_map_y][next_map_x];
+
+                                // Syncronize time of PC and NPS in the next map.
+                                if (current_map->queue.current_size > 0) {
+                                    struct queue_node sync_node;
+
+                                    // Extract NPC on the next map
+                                    mq_extract_min(&(current_map->queue), &sync_node);
+
+                                    deq_node.current_time = sync_node.current_time;
+
+                                    mq_insert_node(&(current_map->queue), sync_node);
+                                } else {
+                                    deq_node.current_time = 0;
+                                }
+                                
+                                // Place pc on a new map.
+                                if (gate_direction == NORTH) {
+                                    pc.y = MAP_HEIGHT - 2;
+                                } else if (gate_direction == SOUTH) {
+                                    pc.y = 1;
+                                } else if (gate_direction == EAST) {
+                                    pc.x = 1;
+                                } else if (gate_direction == WEST) {
+                                    pc.x = MAP_WIDTH - 2;
+                                } else {
+                                    mvprintw(0, 0, "Can't assign new x, y for pc\n");
+                                    refresh();
+                                    break;
+                                }
+
+                            // Next map already exists. Just need to move there.
+                            } else {
+                                // Assign already existing map as the next one.
+                                current_map = this_world.world_maps[next_map_y][next_map_x];
+
+                                // Syncronize time of PC and NPS in the next map.
+                                if (current_map->queue.current_size > 0) {
+                                    struct queue_node sync_node;
+
+                                    // Extract NPC on the next map
+                                    mq_extract_min(&(current_map->queue), &sync_node);
+
+                                    deq_node.current_time = sync_node.current_time;
+
+                                    mq_insert_node(&(current_map->queue), sync_node);
+                                } else {
+                                    deq_node.current_time = 0;
+                                }
+
+                                // Place pc on a new map.
+                                if (gate_direction == NORTH) {
+                                    pc.y = MAP_HEIGHT - 2;
+                                } else if (gate_direction == SOUTH) {
+                                    pc.y = 1;
+                                } else if (gate_direction == EAST) {
+                                    pc.x = 1;
+                                } else if (gate_direction == WEST) {
+                                    pc.x = MAP_WIDTH - 2;
+                                } else {
+                                    mvprintw(0, 0, "Can't assign new x, y for pc\n");
+                                    refresh();
+                                    break;
+                                }
+                            }
+                            
+                            successful_move = 1;
+                        }
+                    }
+
+                    // ~~~ Check we move to borders but not a gate.~~~
+                    else if ((new_x == MAP_WIDTH - 1 || new_x == 0 || new_y == 0 || new_y == MAP_HEIGHT - 1)) {
+                        mvprintw(0, 0, "Going out of bounds 777808");
                         refresh();
                     }
                     // Check if terrain is not passible
@@ -334,11 +525,11 @@ int main(int argc, char *argv[]) {
                         refresh();
                     }
                     // Check if we encountered a trainer
-                    else if (first_map.entity_map[new_y][new_x] != NULL) {
-                        struct entity *bumped_npc = first_map.entity_map[new_y][new_x];
+                    else if (current_map->entity_map[new_y][new_x] != NULL) {
+                        NPC *bumped_npc = (NPC *) current_map->entity_map[new_y][new_x];
                         
                         // If not defeated - battle
-                        if (bumped_npc->npc->defeated == 0) {
+                        if (bumped_npc->defeated == 0) {
                             mvprintw(0, 0, "Battle! Press 'Esc' to exit.");
                             refresh();
 
@@ -346,10 +537,10 @@ int main(int argc, char *argv[]) {
                                 ;
                             }
                             
-                            bumped_npc->npc->defeated = 1;
+                            bumped_npc->defeated = 1;
                             
                             clear();
-                            display_map_with_pc(&first_map, &this_world, &pc);
+                            display_map_with_pc(current_map, &this_world, &pc);
                         } else {
                             mvprintw(0, 0, "You have defeated this trainer!");
                             refresh();
@@ -360,20 +551,22 @@ int main(int argc, char *argv[]) {
                         pc.x = new_x;
                         pc.y = new_y;
 
-                        find_distance_map(&pc, RIVAL, first_map.rival_dist_map, &first_map);
-                        find_distance_map(&pc, HIKER, first_map.hiker_dist_map, &first_map);
+                        find_distance_map(&pc, RIVAL, current_map->rival_dist_map, current_map);
+                        find_distance_map(&pc, HIKER, current_map->hiker_dist_map, current_map);
                     }
                 }
             }
 
             // Update time for PC node before enque it back
-            int next_step_cost = calculate_cost(PC, (enum terrain_types) first_map.grid_array[pc.y][pc.x]);
+            int next_step_cost = calculate_cost(PC, (enum terrain_types) current_map->grid_array[pc.y][pc.x]);
             deq_node.current_time += next_step_cost;
 
             // Insert updated node back in the priority queue.
-            mq_insert_node(&moves_queue, deq_node); 
+            mq_insert_node(&(current_map->queue), deq_node);
+        
+        // This is not PC
         } else {
-            int step_cost = move_npc(deq_node.entity, &first_map, &pc);
+            int step_cost = move_npc((NPC *) deq_node.entity, current_map, &pc);
 
             if (step_cost == -1) {
                 mvprintw(0, 0, "Trainer got you! Press 'Esc' to exit");
@@ -383,16 +576,16 @@ int main(int argc, char *argv[]) {
                     ;
                 }
                 
-                deq_node.entity->npc->defeated = 1;
+                ((NPC *)deq_node.entity)->defeated = 1;
                 step_cost = WAIT_COST;
                 
                 clear();
-                display_map_with_pc(&first_map, &this_world, &pc);
+                display_map_with_pc(current_map, &this_world, &pc);
             }
 
             deq_node.current_time += step_cost;
 
-            mq_insert_node(&moves_queue, deq_node);
+            mq_insert_node(&(current_map->queue), deq_node);
         }
     }
 
@@ -400,76 +593,4 @@ int main(int argc, char *argv[]) {
     endwin();
 
     return 0;
-
-
-    // 4. Display the map
-    // display_map_with_pc(&first_map, &this_world, &pc);
-    
-    // 4. Call path_finder for Hiker and Rival
-    // int hiker_dist_map[MAP_HEIGHT][MAP_WIDTH];
-    // find_distance_map(&pc, HIKER, hiker_dist_map, &first_map);
-
-    //int rival_dist_map[MAP_HEIGHT][MAP_WIDTH];
-    //find_distance_map(&pc, RIVAL, rival_dist_map, &first_map);
-
-    // 5. Print maps for hiker and rival
-    // print_dist_map(HIKER, hiker_dist_map);
-    // print_dist_map(RIVAL, rival_dist_map);
-
-
-
-    /*
-    // 2. Game loop
-    int game_continues = 1;
-
-    do {
-        // a. Take input from the user.
-        printf("Enter command: ");
-
-        char command;
-        scanf(" %c", &command);
-
-        // b. Validate input, calculate new place.
-        int next_map_y = this_world.current_map_y;
-        int next_map_x = this_world.current_map_x;
-        int fly_y, fly_x;
-
-        switch (command) {
-            case 'n':
-                next_map_y = this_world.current_map_y - 1; break;
-            case 'e':
-                next_map_x = this_world.current_map_x + 1; break;
-            case 's':
-                next_map_y = this_world.current_map_y + 1; break;
-            case 'w':
-                next_map_x = this_world.current_map_x - 1; break;
-            case 'f':
-                scanf(" %d %d", &fly_x, &fly_y);
-                next_map_x = 200 + fly_x;
-                next_map_y = 200 + fly_y;
-                break;
-            case 'q':
-                game_continues = 0;
-                continue;
-            default:
-                printf("Uncorrect input!\n");
-                continue;
-        }
-
-        if (next_map_x < 0 || next_map_y < 0 || next_map_x >= WORLD_WIDTH || next_map_y >= WORLD_HEIGHT) {
-            printf("Moving out off bounds of the world!\n");
-        } else {
-            this_world.current_map_y = next_map_y;
-            this_world.current_map_x = next_map_x;
-
-            // If map does not exist.
-            if (this_world.world_maps[next_map_y][next_map_x] == NULL) {
-                this_world.world_maps[next_map_y][next_map_x] = malloc(sizeof(struct map));
-                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world);
-            }
-
-            display_map(this_world.world_maps[next_map_y][next_map_x], &this_world);
-        }
-    } while (game_continues);
-    */
 }

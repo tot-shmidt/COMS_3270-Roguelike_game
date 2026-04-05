@@ -1,12 +1,12 @@
 #ifndef MOVES_QUEUE_H
 #define MOVES_QUEUE_H
 
-#include "characters_players.h"
+class Character;
 
 struct queue_node {
     int current_time;
 
-    struct entity *entity;
+    Character *entity;
 };
 
 struct moves_queue {

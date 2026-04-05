@@ -1,45 +1,54 @@
 #ifndef TERRAIN_GENERATOR_H
 #define TERRAIN_GENERATOR_H
 
-// Forward declaration of characters_players.h struct
-struct entity;
-
 #define MAP_WIDTH 80
 #define MAP_HEIGHT 21
 #define WORLD_WIDTH 401
 #define WORLD_HEIGHT 401
 
-struct map {
-    int south_exit;
-    int west_exit;
-    int north_exit;
-    int east_exit;
+#include "moves_queue.h"
 
-    char grid_array[MAP_HEIGHT][MAP_WIDTH];
+class Character;
+class Player;
+class NPC;
 
-    // This is new for npc managment:
 
-    // Array to store all the NPCs pointers on the current map and total number of NPC.
-    struct entity *entity_array; 
-    int entity_num;
+class map {
+    public:
+        int south_exit;
+        int west_exit;
+        int north_exit;
+        int east_exit;
 
-    // 2D array to store locations of all the NPCs(not PC)
-    struct entity *entity_map[MAP_HEIGHT][MAP_WIDTH];
+        // This holds entire map of terrain chars.
+        char grid_array[MAP_HEIGHT][MAP_WIDTH];
 
-    // Hiker and Rival distance maps
-    int hiker_dist_map[MAP_HEIGHT][MAP_WIDTH];
-    int rival_dist_map[MAP_HEIGHT][MAP_WIDTH];
+        // ~~~ NPC/PC managment ~~~
+
+        // Array to store all the NPCs pointers on the current map and total number of NPC.
+        NPC** entity_array;
+        int entity_num;
+
+        // 2D array to store locations of all the NPCs(not PC)
+        NPC* entity_map[MAP_HEIGHT][MAP_WIDTH];
+
+        // Hiker and Rival distance maps
+        int hiker_dist_map[MAP_HEIGHT][MAP_WIDTH];
+        int rival_dist_map[MAP_HEIGHT][MAP_WIDTH];
+
+        // Moves queue
+        struct moves_queue queue;
 };
+
 
 struct world {
-    struct map *world_maps[WORLD_HEIGHT][WORLD_WIDTH]; // 401 x 401
+    map *world_maps[WORLD_HEIGHT][WORLD_WIDTH]; // 401 x 401
     int current_map_y;
     int current_map_x;
-    // Here I will have 2 distance maps(for Hiker and Huilo).
 };
 
-void create_map(struct map *new_map, struct world *this_world, int npc_num);
-void initialize_world(struct world *new_world, struct map *first_map);
+void create_map(map *new_map, struct world *this_world, int npc_num);
+void initialize_world(struct world *new_world, map *first_map);
 
 enum terrain_types {
     BOULDER = 'b',
