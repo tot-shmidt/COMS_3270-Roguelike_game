@@ -6,6 +6,8 @@
 #define WORLD_WIDTH 401
 #define WORLD_HEIGHT 401
 
+#include "moves_queue.h"
+
 class Character;
 class Player;
 class NPC;
@@ -33,6 +35,9 @@ class map {
         // Hiker and Rival distance maps
         int hiker_dist_map[MAP_HEIGHT][MAP_WIDTH];
         int rival_dist_map[MAP_HEIGHT][MAP_WIDTH];
+
+        // Moves queue
+        struct moves_queue queue;
 };
 
 

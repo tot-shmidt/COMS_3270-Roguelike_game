@@ -14,4 +14,7 @@ March 4: rewrote logic in terrain_generator to work with NPCs creation
 March 5: fixed a bug with SENTY NPC and polished minor things.
 March 23: Integrated ncurses and allowed @ to move
 March 24: Added menu with trainers on 't' and made trainers not to pathfind after being defeated.
+March 28: Added classes and inheritance
+March 29: Added functionality to move to different maps
+Match 30: Added fly function and that proper handling of NPCs and their time across all the map
 

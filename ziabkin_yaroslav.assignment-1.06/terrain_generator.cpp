@@ -408,6 +408,17 @@ void create_map(struct map *new_map, struct world *this_world, int npc_num) {
 
     // 1.04: populate this map with NPCs.
     create_npcs(new_map, npc_num);
+
+    // 1.06: initialize moves_queue
+    initialize_moves_queue(&(new_map->queue), npc_num + 1);
+
+    // Push all the newly generated local NPCs into the queue.
+    for (i = 0; i < new_map->entity_num; i++) {
+        struct queue_node npc_node;
+        npc_node.current_time = 0;
+        npc_node.entity = *(new_map->entity_array + i);
+        mq_insert_node(&(new_map->queue), npc_node);
+    }
 }
 
 void initialize_world(struct world *new_world, struct map *first_map) {
