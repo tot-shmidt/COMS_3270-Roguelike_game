@@ -9,6 +9,11 @@
 #include <unistd.h>  // For usleep
 #include <ncurses.h>
 
+// For 1.07
+#include <iostream>
+#include <fstream>
+#include <string>
+
 // Setup ncurses
 void init_ncurses() {
     initscr();
@@ -85,6 +90,9 @@ int main(int argc, char *argv[]) {
 // 0. Parse command line arguments
     int npc_num = 10;
 
+    // Name of the file to open
+    char *file_name = NULL;
+
     int i;
     for (i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--numtrainers") == 0) {
@@ -92,8 +100,95 @@ int main(int argc, char *argv[]) {
                 npc_num = atoi(argv[i+1]);
                 break;
             }
+        
+    // 1) Adding arguments from 1.07: pokemon, moves, pokemon moves,pokemon species, experience, type names, pokemon stats, stats or pokemon types
+        } else if ((strcmp(argv[i], "pokemon") == 0) || (strcmp(argv[i], "moves") == 0) || (strcmp(argv[i], "pokemon_moves") == 0) ||
+                   (strcmp(argv[i], "pokemon_species") == 0) || (strcmp(argv[i], "experience") == 0) || (strcmp(argv[i], "type_names") == 0) ||
+                   (strcmp(argv[i], "pokemon_stats") == 0) || (strcmp(argv[i], "stats")== 0) || (strcmp(argv[i], "pokemon_types") == 0)) {
+
+                    // Save the actual file name. Not a path yet.
+                    file_name = argv[i];
+                    break;
         }
+    } 
+        
+    // 2) Create 3 Strings for potential paths of the database.
+    if (file_name == NULL) {
+        printf("Error: provide a valid flag like: \"./game pokemon_moves\"\n");
+        return 1;
+
+    } else {
+        // find the length of command line argument
+        int arg_str_length = strlen(file_name);
+
+      // ~~~ PATH 1: /share/cs327/ - do it by hand. ~~~
+        const char *base1 = "/share/cs327/";
+
+        // Points to index where we write at malloced array path1
+        int current_write_index = 0;
+
+        int total_length1 = strlen(base1) + arg_str_length + 4 + 1; // 4 is for .csv , 1 for null byte '\0'
+
+        char *path1 = (char *) malloc(total_length1);
+        // a. Copy base address
+        for (int i = 0; base1[i] != '\0'; i++) {
+            path1[current_write_index] = base1[i];
+            current_write_index++;
+        }
+
+        // b. Copy file name
+        for (int i = 0; file_name[i] != '\0'; i++) {
+            path1[current_write_index] = file_name[i];
+            current_write_index++;
+        }
+
+        // c. Copy .csv
+        path1[current_write_index++] = '.';
+        path1[current_write_index++] = 'c';
+        path1[current_write_index++] = 's';
+        path1[current_write_index++] = 'v';
+        path1[current_write_index] = '\0';
+
+        printf("Hand-created path1: %s\n", path1);
+
+      // ~~~ PATH 2: $HOME/.poke327/ , use getenv() to resolve the value of the HOME - use snprintf() ~~~
+        char *home_path = getenv("HOME");
+        if (home_path == NULL) {
+            printf("HOME variable was not found.\n");
+            return 1;
+        }
+
+        const char *base2 = "/.poke327/";
+
+        // Total number of bytes with null byte for the second path
+        int total_length2 = strlen(home_path) + strlen(base2) + strlen(file_name) + 4 + 1;
+        char *path2 = (char *) malloc(total_length2);
+
+        // String print formatted is like printf() but instead it prints directly into my string variable. Automatically add \0 at the end.
+        // snprintf(destination, max_size, "format string", variables...)
+        snprintf(path2, total_length2,"%s%s%s.csv", home_path, base2, file_name);
+
+        printf("Path2: %s\n", path2);
+
+
+      // ~~~ PATH 3: mine local path to the DB on my comuter - strcat() and strcpy() ~~~
+        const char *base3 = "/home/tot_shmidt/Iowa_State/Spring_2026/COMS_3270/pokedex/pokedex/data/csv/";
+
+        int total_length3 = strlen(base3) + strlen(file_name) + 4 + 1;
+        char *path3 = (char *) malloc(total_length3);
+
+        // copies "base" into "path", AND adds a '\0' at the end.
+        strcpy(path3, base3);
+
+        // strcat scans "path" until it hits the '\0', overwrites '\0' with the first letter of file_name, and adds a new '\0' at the end.
+        strcat(path3, file_name);
+        strcat(path3, ".csv");
+
+        printf("Path3: %s\n", path3);
     }
+
+    return 0;
+    
 
 // 1. Create world and first map.
     struct world this_world;
