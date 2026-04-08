@@ -19,7 +19,7 @@ min_heap.o: min_heap.cpp min_heap.h terrain_generator.h
 moves_queue.o: moves_queue.cpp moves_queue.h terrain_generator.h characters_players.h
 	g++ -Wall -Werror -g -c moves_queue.cpp
 
-database.o: database.h
+database.o: database.h database.cpp
 	g++ -Wall -Werror -g -c database.cpp
 
 clean:
