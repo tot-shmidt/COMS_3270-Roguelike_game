@@ -224,9 +224,9 @@ int main(int argc, char *argv[]) {
 
 
 
-        ((strcmp(argv[i], "pokemon") == 0) || (strcmp(argv[i], "moves") == 0) || (strcmp(argv[i], "pokemon_moves") == 0) ||
-                   (strcmp(argv[i], "pokemon_species") == 0) || (strcmp(argv[i], "experience") == 0) || (strcmp(argv[i], "type_names") == 0) ||
-                   (strcmp(argv[i], "pokemon_stats") == 0) || (strcmp(argv[i], "stats")== 0) || (strcmp(argv[i], "pokemon_types") == 0)) {
+       // ((strcmp(argv[i], "pokemon") == 0) || (strcmp(argv[i], "moves") == 0) || (strcmp(argv[i], "pokemon_moves") == 0) ||
+         //          (strcmp(argv[i], "pokemon_species") == 0) || (strcmp(argv[i], "experience") == 0) || (strcmp(argv[i], "type_names") == 0) ||
+         //          (strcmp(argv[i], "pokemon_stats") == 0) || (strcmp(argv[i], "stats")== 0) || (strcmp(argv[i], "pokemon_types") == 0)) {
 
     return 0;
     

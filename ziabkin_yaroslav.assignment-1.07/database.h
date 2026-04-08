@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <fstream>
 
 // ~~~ CLASSES ~~~
 
@@ -41,8 +42,8 @@ class moves_db {
 };
 
 // ~~~ PARSING FUNCTIONS ~~~
-std::vector<pokemon_db> parse_pokemon(std::ifstream* file);
-std::vector<moves_db> parse_moves(std::ifstream* file);
+std::vector<pokemon_db> parse_pokemon(std::ifstream* csv_file);
+std::vector<moves_db> parse_moves(std::ifstream* csv_file);
 
 // ~~~ PRINTING FUNCTIONS ~~~
 void print_pokemon_db(std::vector<pokemon_db>* db_vector);
