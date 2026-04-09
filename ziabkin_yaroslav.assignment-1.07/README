@@ -6,3 +6,4 @@ I created custom min heap and I use it in my implementation of Dijkstra algorith
 SWIMMERs are marked with U character and they don't move. I will add this functionality soon, as it is the same logic as WONDERER. It was a very long assignment. Probably, another 20 hours to finish.
 I have also implemented ncurses functionality in 1.05. Now, there is unbuffered input in the game, you can move @. Also, added several small features, like trainers list and trainers don't pathfind after being defeated. 
 For 1.06 I added code from 1.02 and it took a lot of hours to make it finally work all together. Added inheritance and classes from C++.
+For 1.07 you write "./game pokemon" or other flag from the list in the assignment. Used C++ functionality to work with files.

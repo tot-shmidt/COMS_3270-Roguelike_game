@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
     int arg_str_length = strlen(file_name);
 
     // ~~~ PATH 1: /share/cs327/ - do it by hand. ~~~
-    const char *base1 = "/share/cs327/";
+    const char *base1 = "/share/cs327/pokedex/pokedex/data/csv/";
 
     // Points to index where we write at malloced array path1
     int current_write_index = 0;
@@ -159,7 +159,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    const char *base2 = "/.poke327/";
+    const char *base2 = "/.poke327/pokedex/pokedex/data/csv/";
 
     // Total number of bytes with null byte for the second path
     int total_length2 = strlen(home_path) + strlen(base2) + strlen(file_name) + 4 + 1;
@@ -204,14 +204,16 @@ int main(int argc, char *argv[]) {
         csv_file.open(path3);
     }
 
-    // If non was successful, exit the progra 
+    // If non was successful, exit the program
     if (!csv_file.is_open()) {
         std::cout << "No " << file_name << ".csv at three locations." << std::endl;
+        return 1;
     }
 
     // 4. I have opened file. Now I need if - else if statement that will determine how exactly to parse the file.
     std::string file_string = std::string(file_name);
 
+    //pokemon, moves, pokemon_moves,pokemon_species, experience, type_names, pokemon_stats, stats or pokemon_types
     if (file_string == "pokemon") {
         std::vector<pokemon_db> pokemon_vector = parse_pokemon(&csv_file);
         print_pokemon_db(&pokemon_vector);
@@ -219,14 +221,29 @@ int main(int argc, char *argv[]) {
         std::vector<moves_db> moves_vector = parse_moves(&csv_file);
         print_moves_db(&moves_vector);
     } else if (file_string == "pokemon_moves") {
-
+        std::vector<pokemon_moves_db> pokemon_moves_vector = parse_pokemon_moves(&csv_file);
+        print_pokemon_moves_db(&pokemon_moves_vector);
+    } else if (file_string == "pokemon_species") {
+        std::vector<pokemon_species_db> pokemon_species_vector = parse_pokemon_species(&csv_file);
+        print_pokemon_species_db(&pokemon_species_vector);
+    } else if (file_string == "experience") {
+        std::vector<experience_db> experience_vector = parse_experience(&csv_file);
+        print_experience_db(&experience_vector);
+    } else if (file_string == "type_names") {
+        std::vector<type_names_db> type_names_vector = parse_type_names(&csv_file);
+        print_type_names_db(&type_names_vector);
+    } else if (file_string == "pokemon_stats") {
+        std::vector<pokemon_stats_db> pokemon_stats_vector = parse_pokemon_stats(&csv_file);
+        print_pokemon_stats_db(&pokemon_stats_vector);
+    } else if (file_string == "stats") {
+        std::vector<stats_db> stats_vector = parse_stats(&csv_file);
+        print_stats_db(&stats_vector);
+    } else if (file_string == "pokemon_types") {
+        std::vector<pokemon_types_db> pokemon_types_vector = parse_pokemon_types(&csv_file);
+        print_pokemon_types_db(&pokemon_types_vector);
+    } else {
+        std::cout << "File string is not found" << std::endl;
     }
-
-
-
-       // ((strcmp(argv[i], "pokemon") == 0) || (strcmp(argv[i], "moves") == 0) || (strcmp(argv[i], "pokemon_moves") == 0) ||
-         //          (strcmp(argv[i], "pokemon_species") == 0) || (strcmp(argv[i], "experience") == 0) || (strcmp(argv[i], "type_names") == 0) ||
-         //          (strcmp(argv[i], "pokemon_stats") == 0) || (strcmp(argv[i], "stats")== 0) || (strcmp(argv[i], "pokemon_types") == 0)) {
 
     return 0;
     

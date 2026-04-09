@@ -17,4 +17,6 @@ March 24: Added menu with trainers on 't' and made trainers not to pathfind afte
 March 28: Added classes and inheritance
 March 29: Added functionality to move to different maps
 Match 30: Added fly function and that proper handling of NPCs and their time across all the map
-
+April 6: Reworked command line arguments loop
+April 7: Finished parsing first half of the files
+April 8: Finished parsing second half of the files
