@@ -113,6 +113,9 @@ public:
     int slot;
 };
 
+// Function to read DB into memory.
+int read_db_in_memory(char *file_name);
+
 // ~~~ PARSING FUNCTIONS ~~~
 std::vector<pokemon_db> parse_pokemon(std::ifstream* csv_file);
 std::vector<moves_db> parse_moves(std::ifstream* csv_file);
