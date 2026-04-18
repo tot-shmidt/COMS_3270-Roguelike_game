@@ -109,29 +109,25 @@ void display_map_with_pc(map *current_map, struct world *this_world, Player *pc)
 }
 
 
-
 int main(int argc, char *argv[]) {
     srand(time(NULL));
 
 // 0. Parse command line arguments, read database in memory.
     int npc_num = 10;
 
-    // Name of the file to open
+    // Redundant from 1.07
     char *file_name = NULL;
-
     parse_command_line_args(&file_name, argc, argv, &npc_num);
         
-    // Print database table in the terminal
-    read_db_in_memory(file_name);
+    // Read database in memory
+    struct Database database;
+    read_db_in_memory(&database);
 
 // 1. Create world and first map.
     struct world this_world;
     map *current_map = (map *) malloc(sizeof(map));
     initialize_world(&this_world, current_map);
     create_map(current_map, &this_world, npc_num);
-
-    int a = getchar();
-    putchar(a);
 
 // 2. Create PC
     Player pc;

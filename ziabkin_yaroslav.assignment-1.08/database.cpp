@@ -5,80 +5,45 @@
 #include <string.h>
 
 
-int read_db_in_memory(char *file_name) {
-    // 2) Create 3 Strings for potential paths of the database.
-    if (file_name == NULL) {
-        printf("Error: provide a valid flag like: \"./game pokemon_moves\"\n");
-        return 1;
-    }
-
-    // find the length of command line argument
-    int arg_str_length = strlen(file_name);
-
-    // ~~~ PATH 1: /share/cs327/ - do it by hand. ~~~
+int read_db_in_memory(struct Database *database) {
+    // PATH 1: /share/cs327/
     const char *base1 = "/share/cs327/pokedex/pokedex/data/csv/";
 
-    // Points to index where we write at malloced array path1
-    int current_write_index = 0;
-
-    int total_length1 = strlen(base1) + arg_str_length + 4 + 1; // 4 is for .csv , 1 for null byte '\0'
-
-    char *path1 = (char *) malloc(total_length1);
-    // a. Copy base address
-    for (int i = 0; base1[i] != '\0'; i++) {
-        path1[current_write_index] = base1[i];
-        current_write_index++;
-    }
-
-    // b. Copy file name
-    for (int i = 0; file_name[i] != '\0'; i++) {
-        path1[current_write_index] = file_name[i];
-        current_write_index++;
-    }
-
-    // c. Copy .csv
-    path1[current_write_index++] = '.';
-    path1[current_write_index++] = 'c';
-    path1[current_write_index++] = 's';
-    path1[current_write_index++] = 'v';
-    path1[current_write_index] = '\0';
-
-    printf("Hand-created path1: %s\n", path1);
-
-    // ~~~ PATH 2: $HOME/.poke327/ , use getenv() to resolve the value of the HOME - use snprintf() ~~~
+    // PATH 2: $HOME/.poke327/ , use getenv() to resolve the value of the HOME
     char *home_path = getenv("HOME");
     if (home_path == NULL) {
         printf("HOME variable was not found.\n");
         return 1;
     }
 
-    const char *base2 = "/.poke327/pokedex/pokedex/data/csv/";
+    const char *base2_without_home = "/.poke327/pokedex/pokedex/data/csv/";
 
-    // Total number of bytes with null byte for the second path
-    int total_length2 = strlen(home_path) + strlen(base2) + strlen(file_name) + 4 + 1;
-    char *path2 = (char *) malloc(total_length2);
+    int base_length2 = strlen(home_path) + strlen(base2_without_home) + 1;
+    char *base2 = (char *) malloc(base_length2);
 
     // String print formatted is like printf() but instead it prints directly into my string variable. Automatically add \0 at the end.
     // snprintf(destination, max_size, "format string", variables...)
-    snprintf(path2, total_length2,"%s%s%s.csv", home_path, base2, file_name);
+    snprintf(base2, base_length2,"%s%s", home_path, base2_without_home);
 
-    printf("Path2: %s\n", path2);
-
-
-    // ~~~ PATH 3: mine local path to the DB on my comuter - strcat() and strcpy() ~~~
+    // PATH 3: mine local path to the DB on my comuter
     const char *base3 = "/home/tot_shmidt/Iowa_State/Spring_2026/COMS_3270/pokedex/pokedex/data/csv/";
 
-    int total_length3 = strlen(base3) + strlen(file_name) + 4 + 1;
-    char *path3 = (char *) malloc(total_length3);
+    // ##########################
+    // #   FILE 1: pokemon.csv  #
+    // ##########################
+    int total_length1 = strlen(base1) + strlen("pokemon.csv");
+    int total_length2 = strlen(base2) + strlen("pokemon.csv");
+    int total_length3 = strlen(base3) + strlen("pokemon.csv");
 
-    // copies "base" into "path", AND adds a '\0' at the end.
-    strcpy(path3, base3);
+    char *path1 = (char *) malloc(total_length1 + strlen("pokemon.csv") + 1);
+    char *path2 = (char *) malloc(total_length2 + strlen("pokemon.csv") + 1);
+    char *path3 = (char *) malloc(total_length3 + strlen("pokemon.csv") + 1);
 
-    // strcat scans "path" until it hits the '\0', overwrites '\0' with the first letter of file_name, and adds a new '\0' at the end.
-    strcat(path3, file_name);
-    strcat(path3, ".csv");
-
-    printf("Path3: %s\n", path3);
+    // String print formatted is like printf() but instead it prints directly into my string variable. Automatically add \0 at the end.
+    // snprintf(destination, max_size, "format string", variables...)
+    snprintf(path1, total_length1 + 1, "%s%s", base1, "pokemon.csv");
+    snprintf(path2, total_length2 + 1, "%s%s", base2, "pokemon.csv");
+    snprintf(path3, total_length2 + 1, "%s%s", base3, "pokemon.csv");
 
     // 3. OPEN 3 locations, one by one.
     std::ifstream csv_file;
@@ -99,45 +64,366 @@ int read_db_in_memory(char *file_name) {
 
     // If non was successful, exit the program
     if (!csv_file.is_open()) {
-        std::cout << "No " << file_name << ".csv at three locations." << std::endl;
+        std::cout << "pokemon.csv at three locations." << std::endl;
         return 1;
     }
 
-    // 4. I have opened file. Now I need if - else if statement that will determine how exactly to parse the file.
-    std::string file_string = std::string(file_name);
+    // 4. I have opened file. Parse it and store in RAM.
+    database->pokemon = parse_pokemon(&csv_file);
 
-    //pokemon, moves, pokemon_moves,pokemon_species, experience, type_names, pokemon_stats, stats or pokemon_types
-    if (file_string == "pokemon") {
-        std::vector<pokemon_db> pokemon_vector = parse_pokemon(&csv_file);
-        print_pokemon_db(&pokemon_vector);
-    } else if (file_string == "moves") {
-        std::vector<moves_db> moves_vector = parse_moves(&csv_file);
-        print_moves_db(&moves_vector);
-    } else if (file_string == "pokemon_moves") {
-        std::vector<pokemon_moves_db> pokemon_moves_vector = parse_pokemon_moves(&csv_file);
-        print_pokemon_moves_db(&pokemon_moves_vector);
-    } else if (file_string == "pokemon_species") {
-        std::vector<pokemon_species_db> pokemon_species_vector = parse_pokemon_species(&csv_file);
-        print_pokemon_species_db(&pokemon_species_vector);
-    } else if (file_string == "experience") {
-        std::vector<experience_db> experience_vector = parse_experience(&csv_file);
-        print_experience_db(&experience_vector);
-    } else if (file_string == "type_names") {
-        std::vector<type_names_db> type_names_vector = parse_type_names(&csv_file);
-        print_type_names_db(&type_names_vector);
-    } else if (file_string == "pokemon_stats") {
-        std::vector<pokemon_stats_db> pokemon_stats_vector = parse_pokemon_stats(&csv_file);
-        print_pokemon_stats_db(&pokemon_stats_vector);
-    } else if (file_string == "stats") {
-        std::vector<stats_db> stats_vector = parse_stats(&csv_file);
-        print_stats_db(&stats_vector);
-    } else if (file_string == "pokemon_types") {
-        std::vector<pokemon_types_db> pokemon_types_vector = parse_pokemon_types(&csv_file);
-        print_pokemon_types_db(&pokemon_types_vector);
-    } else {
-        std::cout << "File string is not found" << std::endl;
+    // Prepare csv_file file stream to open the next file.
+    csv_file.close();
+    csv_file.clear();
+
+    free(path1);
+    free(path2);
+    free(path3);
+
+
+    // ##########################
+    // #   FILE 2: moves.csv  #
+    // ##########################
+    total_length1 = strlen(base1) + strlen("moves.csv");
+    total_length2 = strlen(base2) + strlen("moves.csv");
+    total_length3 = strlen(base3) + strlen("moves.csv");
+
+    path1 = (char *) malloc(total_length1 + strlen("moves.csv") + 1);
+    path2 = (char *) malloc(total_length2 + strlen("moves.csv") + 1);
+    path3 = (char *) malloc(total_length3 + strlen("moves.csv") + 1);
+
+    snprintf(path1, total_length1 + 1, "%s%s", base1, "moves.csv");
+    snprintf(path2, total_length2 + 1, "%s%s", base2, "moves.csv");
+    snprintf(path3, total_length2 + 1, "%s%s", base3, "moves.csv");
+
+    // Try first one:
+    csv_file.open(path1);
+
+    // If not there, try the second one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path2);
     }
 
+    // If not there, try the third one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path3);
+    }
+
+    // If non was successful, exit the program
+    if (!csv_file.is_open()) {
+        std::cout << "no moves.csv at three locations." << std::endl;
+        return 1;
+    }
+
+    // I have opened file. Parse it and store in RAM.
+    database->moves = parse_moves(&csv_file);
+
+    // Prepare csv_file file stream to open the next file.
+    csv_file.close();
+    csv_file.clear();
+
+    free(path1);
+    free(path2);
+    free(path3);
+
+    // ################################
+    // #   FILE 3: pokemon_moves.csv  #
+    // ################################
+    total_length1 = strlen(base1) + strlen("pokemon_moves.csv");
+    total_length2 = strlen(base2) + strlen("pokemon_moves.csv");
+    total_length3 = strlen(base3) + strlen("pokemon_moves.csv");
+
+    path1 = (char *) malloc(total_length1 + strlen("pokemon_moves.csv") + 1);
+    path2 = (char *) malloc(total_length2 + strlen("pokemon_moves.csv") + 1);
+    path3 = (char *) malloc(total_length3 + strlen("pokemon_moves.csv") + 1);
+
+    snprintf(path1, total_length1 + 1, "%s%s", base1, "pokemon_moves.csv");
+    snprintf(path2, total_length2 + 1, "%s%s", base2, "pokemon_moves.csv");
+    snprintf(path3, total_length2 + 1, "%s%s", base3, "pokemon_moves.csv");
+
+    // Try first one:
+    csv_file.open(path1);
+
+    // If not there, try the second one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path2);
+    }
+
+    // If not there, try the third one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path3);
+    }
+
+    // If non was successful, exit the program
+    if (!csv_file.is_open()) {
+        std::cout << "no pokemon_moves.csv at three locations." << std::endl;
+        return 1;
+    }
+
+    // 4. I have opened file. Parse it and store in RAM.
+    database->pokemon_moves = parse_pokemon_moves(&csv_file);
+
+    csv_file.close();
+    csv_file.clear();
+    
+    free(path1);
+    free(path2);
+    free(path3);
+
+    // ##################################
+    // #   FILE 4: pokemon_species.csv  #
+    // ##################################
+    total_length1 = strlen(base1) + strlen("pokemon_species.csv");
+    total_length2 = strlen(base2) + strlen("pokemon_species.csv");
+    total_length3 = strlen(base3) + strlen("pokemon_species.csv");
+
+    path1 = (char *) malloc(total_length1 + strlen("pokemon_species.csv") + 1);
+    path2 = (char *) malloc(total_length2 + strlen("pokemon_species.csv") + 1);
+    path3 = (char *) malloc(total_length3 + strlen("pokemon_species.csv") + 1);
+
+    snprintf(path1, total_length1 + 1, "%s%s", base1, "pokemon_species.csv");
+    snprintf(path2, total_length2 + 1, "%s%s", base2, "pokemon_species.csv");
+    snprintf(path3, total_length2 + 1, "%s%s", base3, "pokemon_species.csv");
+
+    // Try first one:
+    csv_file.open(path1);
+
+    // If not there, try the second one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path2);
+    }
+
+    // If not there, try the third one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path3);
+    }
+
+    // If non was successful, exit the program
+    if (!csv_file.is_open()) {
+        std::cout << "no pokemon_species.csv at three locations." << std::endl;
+        return 1;
+    }
+
+    // 4. I have opened file. Parse it and store in RAM.
+    database->pokemon_species = parse_pokemon_species(&csv_file);
+
+    csv_file.close();
+    csv_file.clear();
+
+    free(path1); free(path2); free(path3);
+
+    // #############################
+    // #   FILE 5: experience.csv  #
+    // #############################
+    total_length1 = strlen(base1) + strlen("experience.csv");
+    total_length2 = strlen(base2) + strlen("experience.csv");
+    total_length3 = strlen(base3) + strlen("experience.csv");
+
+    path1 = (char *) malloc(total_length1 + strlen("experience.csv") + 1);
+    path2 = (char *) malloc(total_length2 + strlen("experience.csv") + 1);
+    path3 = (char *) malloc(total_length3 + strlen("experience.csv") + 1);
+
+    snprintf(path1, total_length1 + 1, "%s%s", base1, "experience.csv");
+    snprintf(path2, total_length2 + 1, "%s%s", base2, "experience.csv");
+    snprintf(path3, total_length2 + 1, "%s%s", base3, "experience.csv");
+
+    // Try first one:
+    csv_file.open(path1);
+
+    // If not there, try the second one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path2);
+    }
+
+    // If not there, try the third one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path3);
+    }
+
+    // If non was successful, exit the program
+    if (!csv_file.is_open()) {
+        std::cout << "no experience.csv at three locations." << std::endl;
+        return 1;
+    }
+
+    // 4. I have opened file. Parse it and store in RAM.
+    database->experience = parse_experience(&csv_file);
+
+    csv_file.close();
+    csv_file.clear();
+
+    free(path1); free(path2); free(path3);
+
+    
+    // #############################
+    // #   FILE 6: type_names.csv  #
+    // #############################
+    total_length1 = strlen(base1) + strlen("type_names.csv");
+    total_length2 = strlen(base2) + strlen("type_names.csv");
+    total_length3 = strlen(base3) + strlen("type_names.csv");
+
+    path1 = (char *) malloc(total_length1 + strlen("type_names.csv") + 1);
+    path2 = (char *) malloc(total_length2 + strlen("type_names.csv") + 1);
+    path3 = (char *) malloc(total_length3 + strlen("type_names.csv") + 1);
+
+    snprintf(path1, total_length1 + 1, "%s%s", base1, "type_names.csv");
+    snprintf(path2, total_length2 + 1, "%s%s", base2, "type_names.csv");
+    snprintf(path3, total_length2 + 1, "%s%s", base3, "type_names.csv");
+
+    // Try first one:
+    csv_file.open(path1);
+
+    // If not there, try the second one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path2);
+    }
+
+    // If not there, try the third one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path3);
+    }
+
+    // If non was successful, exit the program
+    if (!csv_file.is_open()) {
+        std::cout << "no type_names.csv at three locations." << std::endl;
+        return 1;
+    }
+
+    // 4. I have opened file. Parse it and store in RAM.
+    database->type_names = parse_type_names(&csv_file);
+
+    csv_file.close();
+    csv_file.clear();
+
+    free(path1); free(path2); free(path3);
+
+
+    // ################################
+    // #   FILE 7: pokemon_stats.csv  #
+    // ################################
+    total_length1 = strlen(base1) + strlen("pokemon_stats.csv");
+    total_length2 = strlen(base2) + strlen("pokemon_stats.csv");
+    total_length3 = strlen(base3) + strlen("pokemon_stats.csv");
+
+    path1 = (char *) malloc(total_length1 + strlen("pokemon_stats.csv") + 1);
+    path2 = (char *) malloc(total_length2 + strlen("pokemon_stats.csv") + 1);
+    path3 = (char *) malloc(total_length3 + strlen("pokemon_stats.csv") + 1);
+
+    snprintf(path1, total_length1 + 1, "%s%s", base1, "pokemon_stats.csv");
+    snprintf(path2, total_length2 + 1, "%s%s", base2, "pokemon_stats.csv");
+    snprintf(path3, total_length2 + 1, "%s%s", base3, "pokemon_stats.csv");
+
+    // Try first one:
+    csv_file.open(path1);
+
+    // If not there, try the second one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path2);
+    }
+
+    // If not there, try the third one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path3);
+    }
+
+    // If non was successful, exit the program
+    if (!csv_file.is_open()) {
+        std::cout << "no pokemon_stats.csv at three locations." << std::endl;
+        return 1;
+    }
+
+    // 4. I have opened file. Parse it and store in RAM.
+    database->pokemon_stats = parse_pokemon_stats(&csv_file);
+
+    csv_file.close();
+    csv_file.clear();
+
+    free(path1); free(path2); free(path3);
+
+
+    // ##########################
+    // #   FILE 8:  stats.csv   #
+    // ##########################
+    total_length1 = strlen(base1) + strlen("stats.csv");
+    total_length2 = strlen(base2) + strlen("stats.csv");
+    total_length3 = strlen(base3) + strlen("stats.csv");
+
+    path1 = (char *) malloc(total_length1 + strlen("stats.csv") + 1);
+    path2 = (char *) malloc(total_length2 + strlen("stats.csv") + 1);
+    path3 = (char *) malloc(total_length3 + strlen("stats.csv") + 1);
+
+    snprintf(path1, total_length1 + 1, "%s%s", base1, "stats.csv");
+    snprintf(path2, total_length2 + 1, "%s%s", base2, "stats.csv");
+    snprintf(path3, total_length2 + 1, "%s%s", base3, "stats.csv");
+
+    // Try first one:
+    csv_file.open(path1);
+
+    // If not there, try the second one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path2);
+    }
+
+    // If not there, try the third one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path3);
+    }
+
+    // If non was successful, exit the program
+    if (!csv_file.is_open()) {
+        std::cout << "no stats.csv at three locations." << std::endl;
+        return 1;
+    }
+
+    // 4. I have opened file. Parse it and store in RAM.
+    database->stats = parse_stats(&csv_file);
+
+    csv_file.close();
+    csv_file.clear();
+
+    free(path1); free(path2); free(path3);
+
+    // ##################################
+    // #   FILE 9:  pokemon_types.csv   #
+    // ##################################
+    total_length1 = strlen(base1) + strlen("pokemon_types.csv");
+    total_length2 = strlen(base2) + strlen("pokemon_types.csv");
+    total_length3 = strlen(base3) + strlen("pokemon_types.csv");
+
+    path1 = (char *) malloc(total_length1 + strlen("pokemon_types.csv") + 1);
+    path2 = (char *) malloc(total_length2 + strlen("pokemon_types.csv") + 1);
+    path3 = (char *) malloc(total_length3 + strlen("pokemon_types.csv") + 1);
+
+    snprintf(path1, total_length1 + 1, "%s%s", base1, "pokemon_types.csv");
+    snprintf(path2, total_length2 + 1, "%s%s", base2, "pokemon_types.csv");
+    snprintf(path3, total_length2 + 1, "%s%s", base3, "pokemon_types.csv");
+
+    // Try first one:
+    csv_file.open(path1);
+
+    // If not there, try the second one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path2);
+    }
+
+    // If not there, try the third one.
+    if (!csv_file.is_open()) {
+        csv_file.open(path3);
+    }
+
+    // If non was successful, exit the program
+    if (!csv_file.is_open()) {
+        std::cout << "no pokemon_types.csv at three locations." << std::endl;
+        return 1;
+    }
+
+    // 4. I have opened file. Parse it and store in RAM.
+    database->pokemon_types = parse_pokemon_types(&csv_file);
+
+    csv_file.close();
+    csv_file.clear();
+
+    free(path1); free(path2); free(path3);
+    free(base2);
 
     return 0;
 }
