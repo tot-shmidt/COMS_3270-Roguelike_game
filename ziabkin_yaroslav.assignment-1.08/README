@@ -1,0 +1,9 @@
+To run, write "make", "./game" in your terminal.
+
+For this assignment, I used a method where seeds of different terrain types are randomly placed on the map, and then they grow, each being added to a queue.The roads are designed in such a way that they first go in the direction of their exit point, 
+and then there is a 90-degree turn where they meet in pairs, south with north and east with west. Pokemart and pokecenter are placed near by each vertical or horizontal road which connect respective exits.
+I created custom min heap and I use it in my implementation of Dijkstra algorithm. Also, my heap has decrease key function. It took me over 20 hours to finish this assignment. 1.04 works with min_heap as a priority queue for time simulation in the game. At this point
+SWIMMERs are marked with U character and they don't move. I will add this functionality soon, as it is the same logic as WONDERER. It was a very long assignment. Probably, another 20 hours to finish.
+I have also implemented ncurses functionality in 1.05. Now, there is unbuffered input in the game, you can move @. Also, added several small features, like trainers list and trainers don't pathfind after being defeated. 
+For 1.06 I added code from 1.02 and it took a lot of hours to make it finally work all together. Added inheritance and classes from C++.
+For 1.07 you write "./game pokemon" or other flag from the list in the assignment. Used C++ functionality to work with files.
