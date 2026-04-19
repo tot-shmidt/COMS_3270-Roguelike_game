@@ -14,6 +14,7 @@
 #include <fstream>
 #include <string>
 #include "database.h"
+#include "pokemon.h"
 
 // Setup ncurses
 void init_ncurses() {
@@ -581,6 +582,63 @@ int main(int argc, char *argv[]) {
 
                         find_distance_map(&pc, RIVAL, current_map->rival_dist_map, current_map);
                         find_distance_map(&pc, HIKER, current_map->hiker_dist_map, current_map);
+
+                        if (current_map->grid_array[new_y][new_x] == TALL_GRASS) {
+                            if (rand() % 100 < 10) {
+                                // choose random pokemon id from the database.
+                                int species_id = 1 + (rand() % 1090);
+
+                                int manh_distance = abs(this_world.current_map_x - 200) + abs(this_world.current_map_y - 200);
+                                int lowest_level, highest_level;
+
+                                if (manh_distance <= 200) {
+                                    lowest_level = 1;
+                                    highest_level = manh_distance / 2;
+
+                                    if (highest_level == 0) {
+                                        highest_level = 1;
+                                    }
+                                } else {
+                                    lowest_level = (manh_distance - 200) / 2;
+                                    highest_level = 100;
+                                }
+
+                                // Calculate new lavel in the given range
+                                int new_level = lowest_level + (rand() % (highest_level - lowest_level + 1));
+
+                                // CReate pokemon
+                                Pokemon new_poke(new_level, species_id, &database);
+
+                                clear();
+                                mvprintw(2, 5, "A wild pokemon %s appeared!", new_poke.identifier.c_str());
+                                mvprintw(4, 5, "Level: %d", new_poke.current_level);
+                                mvprintw(5, 5, "Shiny: %s", new_poke.shiny ? "Yes" : "No");
+                                
+                                mvprintw(7, 5, "Stats:");
+                                mvprintw(8, 5, "HP: %d", new_poke.actual_stats[0]);
+                                mvprintw(9, 5, "Attack: %d", new_poke.actual_stats[1]);
+                                mvprintw(10, 5, "Defense: %d", new_poke.actual_stats[2]);
+                                mvprintw(11, 5, "Speed: %d", new_poke.actual_stats[3]);
+                                mvprintw(12, 5, "Sp. Atk: %d", new_poke.actual_stats[4]);
+                                mvprintw(13, 5, "Sp. Def: %d", new_poke.actual_stats[5]);
+
+                                mvprintw(15, 5, "Moves:");
+                                for (size_t i = 0; i < new_poke.move_set.size(); i++) {
+                                    mvprintw(16 + i, 5, "%d) %s",(int) i, new_poke.move_set[i].c_str());
+                                }
+
+                                mvprintw(20, 5, "Press ESC to exit.");
+                                refresh();
+
+                                // Wait for the user to press ESC
+                                while (getch() != 27) {
+                                    ;
+                                }
+
+                                clear();
+                                display_map_with_pc(current_map, &this_world, &pc);
+                            }
+                        }
                     }
                 }
             }

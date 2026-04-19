@@ -20,3 +20,6 @@ Match 30: Added fly function and that proper handling of NPCs and their time acr
 April 6: Reworked command line arguments loop
 April 7: Finished parsing first half of the files
 April 8: Finished parsing second half of the files
+April 16: Refactorer how the database is being loaded in memory
+April 17: Created Pokemon class and its constructor
+April 18: Made possible to find a pokemon in a tall grass

@@ -40,6 +40,7 @@ class NPC : public Character {
         int defeated;
 };
 
+
 int place_pc_on_road(Player *pc, map *current_map);
 int initialize_pc(Player *player);
 int initialize_npc(NPC *npc, enum entity_type type);
