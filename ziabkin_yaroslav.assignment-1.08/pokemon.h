@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+class Player;
+
 class Pokemon {
     public:
     
@@ -21,5 +23,7 @@ class Pokemon {
 
     Pokemon(int param_level, int param_species_id, struct Database *database);
 };
+
+int select_initial_pokemon(Player *pc, Database *database);
 
 #endif

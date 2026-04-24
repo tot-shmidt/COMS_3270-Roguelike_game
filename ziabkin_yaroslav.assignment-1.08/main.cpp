@@ -151,6 +151,9 @@ int main(int argc, char *argv[]) {
 // 5. Game loop
     int quit_game = 0;
 
+    // Suggest 3 pokemons for PC at the start of the game
+    select_initial_pokemon(&pc, &database);
+
     while (!quit_game) {
         // Extract node with minimum current_time
         struct queue_node deq_node;
@@ -549,7 +552,7 @@ int main(int argc, char *argv[]) {
                         refresh();
                     }
                     // Check if terrain is not passible
-                    else if (terrain_cost == INFINITY) {
+                    else if (terrain_cost == MY_INFINITY) {
                         mvprintw(0, 0, "You can't cross this impassible object.");
                         refresh();
                     }
@@ -574,7 +577,9 @@ int main(int argc, char *argv[]) {
                             mvprintw(0, 0, "You have defeated this trainer!");
                             refresh();
                         }
+                    // ----------------------------------------------------------------------------------------------------------
                     // Valid place to make a move.
+                    // ----------------------------------------------------------------------------------------------------------
                     } else {
                         successful_move = 1;
                         pc.x = new_x;
@@ -583,10 +588,12 @@ int main(int argc, char *argv[]) {
                         find_distance_map(&pc, RIVAL, current_map->rival_dist_map, current_map);
                         find_distance_map(&pc, HIKER, current_map->hiker_dist_map, current_map);
 
+                        // Pokemon encountering logic in TALL GRASS
                         if (current_map->grid_array[new_y][new_x] == TALL_GRASS) {
                             if (rand() % 100 < 10) {
-                                // choose random pokemon id from the database.
-                                int species_id = 1 + (rand() % 1090);
+                                // choose random pokemon id from the database by first selecting row, and then id from thar row.
+                                int random_row = rand() % database.pokemon.size();
+                                int id_from_row = database.pokemon[random_row].species_id;
 
                                 int manh_distance = abs(this_world.current_map_x - 200) + abs(this_world.current_map_y - 200);
                                 int lowest_level, highest_level;
@@ -606,8 +613,8 @@ int main(int argc, char *argv[]) {
                                 // Calculate new lavel in the given range
                                 int new_level = lowest_level + (rand() % (highest_level - lowest_level + 1));
 
-                                // CReate pokemon
-                                Pokemon new_poke(new_level, species_id, &database);
+                                // Create pokemon
+                                Pokemon new_poke(new_level, id_from_row, &database);
 
                                 clear();
                                 mvprintw(2, 5, "A wild pokemon %s appeared!", new_poke.identifier.c_str());
@@ -624,7 +631,7 @@ int main(int argc, char *argv[]) {
 
                                 mvprintw(15, 5, "Moves:");
                                 for (size_t i = 0; i < new_poke.move_set.size(); i++) {
-                                    mvprintw(16 + i, 5, "%d) %s",(int) i, new_poke.move_set[i].c_str());
+                                    mvprintw(16 + i, 5, "%d) %s",(int) i + 1, new_poke.move_set[i].c_str());
                                 }
 
                                 mvprintw(20, 5, "Press ESC to exit.");

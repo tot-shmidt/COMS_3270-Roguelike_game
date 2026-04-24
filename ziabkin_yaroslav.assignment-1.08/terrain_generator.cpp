@@ -150,7 +150,7 @@ int create_npcs(map *new_map, int npc_num) {
             int cost = calculate_cost(entity_type, (enum terrain_types) new_map->grid_array[new_y][new_x]);
 
             // If cell is empty and cost is not infinity - we found a spot.
-            if (empty_cell && cost != INFINITY) {
+            if (empty_cell && cost != MY_INFINITY) {
                 break;
             }
         } while (1);

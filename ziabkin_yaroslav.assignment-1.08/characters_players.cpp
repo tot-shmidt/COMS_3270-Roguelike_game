@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
+#include "pokemon.h"
 
 
 int place_pc_on_road(Player *pc, map *current_map) {
@@ -38,7 +39,7 @@ void print_dist_map(enum entity_type npc_type, int distance_map[MAP_HEIGHT][MAP_
 
     for (i = 0; i < MAP_HEIGHT; i++) {
         for (j = 0; j < MAP_WIDTH; j++) {
-            if (distance_map[i][j] == INFINITY) {
+            if (distance_map[i][j] == MY_INFINITY) {
                 printf("-- ");
             } else {
                 printf("%02d ", distance_map[i][j] % 100);
@@ -94,8 +95,8 @@ int move_npc(NPC *entity, map *map, Player *pc) {
     int new_x = current_x;
     int new_y = current_y;
 
-    int min_cost = INFINITY;
-    int neigbor_cost = INFINITY;
+    int min_cost = MY_INFINITY;
+    int neigbor_cost = MY_INFINITY;
 
     // Two arrays forming possible move
     static const int dir_arr_y[8] = {1, 1, 0,-1,-1,-1, 0, 1};
@@ -140,7 +141,7 @@ int move_npc(NPC *entity, map *map, Player *pc) {
             }
 
             // Blocked by something case
-            if (min_cost == INFINITY) {
+            if (min_cost == MY_INFINITY) {
                 return WAIT_COST;
             // Found path case. Overwrite min_cost with the actual terrain cost, not value from dist_map.
             } else {
@@ -185,7 +186,7 @@ int move_npc(NPC *entity, map *map, Player *pc) {
             }
 
             // Blocked by something case
-            if (min_cost == INFINITY) {
+            if (min_cost == MY_INFINITY) {
                 return WAIT_COST;
             // Found path case. Overwrite min_cost with the actual terrain cost, not value from dist_map.
             } else {
@@ -212,8 +213,8 @@ int move_npc(NPC *entity, map *map, Player *pc) {
                 // Find step cost for PACER to get to a new cell.
                 neigbor_cost = calculate_cost(PACER, next_terrain);
                 
-                // If cell is not occupied and cost is not INFINITY - move. Else: turn around
-                if  (*(*((*map).entity_map + check_y) + check_x) == NULL && neigbor_cost != INFINITY) {
+                // If cell is not occupied and cost is not MY_INFINITY - move. Else: turn around
+                if  (*(*((*map).entity_map + check_y) + check_x) == NULL && neigbor_cost != MY_INFINITY) {
                     new_x = check_x;
                     new_y = check_y;
                     min_cost = neigbor_cost;
@@ -230,8 +231,8 @@ int move_npc(NPC *entity, map *map, Player *pc) {
                 enum terrain_types prev_terrain = (enum terrain_types) map->grid_array[check_y][check_x];
                 neigbor_cost = calculate_cost(PACER, prev_terrain);
 
-                // If cell is empty and step cost is not INFINITY(reachable)
-                if (map->entity_map[check_y][check_x] == NULL && neigbor_cost != INFINITY) {
+                // If cell is empty and step cost is not MY_INFINITY(reachable)
+                if (map->entity_map[check_y][check_x] == NULL && neigbor_cost != MY_INFINITY) {
                     // We can return to the previous cell.
                     entity->direction = new_direction;
                     new_y = check_y;
@@ -266,7 +267,7 @@ int move_npc(NPC *entity, map *map, Player *pc) {
                 neigbor_cost = calculate_cost(WANDERER, next_terrain);
                 
                 // Can move forward
-                if (map->entity_map[check_y][check_x] == NULL && next_terrain == first_terrain && neigbor_cost != INFINITY) {
+                if (map->entity_map[check_y][check_x] == NULL && next_terrain == first_terrain && neigbor_cost != MY_INFINITY) {
                     new_x = check_x;
                     new_y = check_y;
                     min_cost = neigbor_cost;
@@ -307,7 +308,7 @@ int move_npc(NPC *entity, map *map, Player *pc) {
                 tries++;
             }
 
-            if (tries >= 10 || min_cost == INFINITY) {
+            if (tries >= 10 || min_cost == MY_INFINITY) {
                 return WAIT_COST;
             }
             break;
@@ -326,7 +327,7 @@ int move_npc(NPC *entity, map *map, Player *pc) {
                 enum terrain_types next_terrain = (enum terrain_types) map->grid_array[check_y][check_x];
                 neigbor_cost = calculate_cost(EXPLORER, next_terrain);
                 
-                if (map->entity_map[check_y][check_x] == NULL && neigbor_cost != INFINITY) {
+                if (map->entity_map[check_y][check_x] == NULL && neigbor_cost != MY_INFINITY) {
                     new_x = check_x;
                     new_y = check_y;
                     min_cost = neigbor_cost;
@@ -346,7 +347,7 @@ int move_npc(NPC *entity, map *map, Player *pc) {
                     enum terrain_types next_terrain = (enum terrain_types) map->grid_array[check_y][check_x];
                     neigbor_cost = calculate_cost(EXPLORER, next_terrain);
                     
-                    if (neigbor_cost != INFINITY) {
+                    if (neigbor_cost != MY_INFINITY) {
                         entity->direction = new_direction;
 
                         if (map->entity_map[check_y][check_x] == NULL) {
@@ -362,7 +363,7 @@ int move_npc(NPC *entity, map *map, Player *pc) {
                 tries++;
             }
 
-            if (tries >= 10 || min_cost == INFINITY) {
+            if (tries >= 10 || min_cost == MY_INFINITY) {
                 return WAIT_COST;
             }
             break;
@@ -392,19 +393,19 @@ int move_npc(NPC *entity, map *map, Player *pc) {
 int calculate_cost(enum entity_type e_type, enum terrain_types t_type) {
     if (e_type == PC) {
         switch (t_type) {
-            case BOULDER:       return INFINITY;
-            case MOUNTAINS:     return INFINITY;
-            case TREE:          return INFINITY;
+            case BOULDER:       return MY_INFINITY;
+            case MOUNTAINS:     return MY_INFINITY;
+            case TREE:          return MY_INFINITY;
             case ROAD:          return 10;
             case POK_CENTER:    return 10;
             case POK_MART:      return 10;
             case TALL_GRASS:    return 20;
             case CLEARING:      return 10;
-            case WATER:         return INFINITY;
+            case WATER:         return MY_INFINITY;
         }
     } else if (e_type == HIKER) {
         switch (t_type) {
-            case BOULDER:       return INFINITY;
+            case BOULDER:       return MY_INFINITY;
             case MOUNTAINS:     return 15;
             case TREE:          return 15;
             case ROAD:          return 10;
@@ -412,46 +413,46 @@ int calculate_cost(enum entity_type e_type, enum terrain_types t_type) {
             case POK_MART:      return 50;
             case TALL_GRASS:    return 15;
             case CLEARING:      return 10;
-            case WATER:         return INFINITY;
+            case WATER:         return MY_INFINITY;
         }
     } else if (e_type == RIVAL) {
         switch (t_type) {
-            case BOULDER:       return INFINITY;
-            case MOUNTAINS:     return INFINITY;
-            case TREE:          return INFINITY;
+            case BOULDER:       return MY_INFINITY;
+            case MOUNTAINS:     return MY_INFINITY;
+            case TREE:          return MY_INFINITY;
             case ROAD:          return 10;
             case POK_CENTER:    return 50;
             case POK_MART:      return 50;
             case TALL_GRASS:    return 20;
             case CLEARING:      return 10;
-            case WATER:         return INFINITY;
+            case WATER:         return MY_INFINITY;
         }
     } else if (e_type == SWIMMER) {
         switch (t_type) {
-            case BOULDER:       return INFINITY;
-            case MOUNTAINS:     return INFINITY;
-            case TREE:          return INFINITY;
-            case ROAD:          return INFINITY;
-            case POK_CENTER:    return INFINITY;
-            case POK_MART:      return INFINITY;
-            case TALL_GRASS:    return INFINITY;
-            case CLEARING:      return INFINITY;
+            case BOULDER:       return MY_INFINITY;
+            case MOUNTAINS:     return MY_INFINITY;
+            case TREE:          return MY_INFINITY;
+            case ROAD:          return MY_INFINITY;
+            case POK_CENTER:    return MY_INFINITY;
+            case POK_MART:      return MY_INFINITY;
+            case TALL_GRASS:    return MY_INFINITY;
+            case CLEARING:      return MY_INFINITY;
             case WATER:         return 7;
         }
     } else if (e_type == PACER || e_type == WANDERER || e_type == EXPLORER || e_type == SENTRIES) {
         switch (t_type) {
-            case BOULDER:       return INFINITY;
-            case MOUNTAINS:     return INFINITY;
-            case TREE:          return INFINITY;
+            case BOULDER:       return MY_INFINITY;
+            case MOUNTAINS:     return MY_INFINITY;
+            case TREE:          return MY_INFINITY;
             case ROAD:          return 10;
             case POK_CENTER:    return 50;
             case POK_MART:      return 50;
             case TALL_GRASS:    return 20;
             case CLEARING:      return 10;
-            case WATER:         return INFINITY;
+            case WATER:         return MY_INFINITY;
         }
     } else {
-        return INFINITY;
+        return MY_INFINITY;
     }
 
     return 0;
@@ -462,11 +463,11 @@ void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_H
     struct min_heap priority_queue;
     initialize_min_heap(&priority_queue);
 
-    // Initialize distances to infinity.
+    // Initialize distances to MY_INFINITY.
     int i, j;
     for (i = 0; i < MAP_HEIGHT; i++) {
         for (j = 0; j < MAP_WIDTH; j++) {
-            distance[i][j] = INFINITY;
+            distance[i][j] = MY_INFINITY;
         }
     }
 
@@ -499,13 +500,13 @@ void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_H
             neighbor_cost = calculate_cost(npc_type, (enum terrain_types) map->grid_array[this_y - 1][this_x]);
 
             // We work with this cell only if it is reachable
-            if (neighbor_cost != INFINITY) {
+            if (neighbor_cost != MY_INFINITY) {
                 new_path_cost = this_cost + neighbor_cost;
 
                 // If we found a shorter path to this cell.
                 if (new_path_cost < distance[this_y - 1][this_x]) {
-                    // If distance of neighbor is INFINITY, it is not in the priority_queue yet.
-                    if (distance[this_y - 1][this_x] == INFINITY) {
+                    // If distance of neighbor is MY_INFINITY, it is not in the priority_queue yet.
+                    if (distance[this_y - 1][this_x] == MY_INFINITY) {
                         // Create a new heap_node for it and insert it.
                         struct heap_node new_heap_node;
                         new_heap_node.x = this_x;
@@ -530,13 +531,13 @@ void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_H
             neighbor_cost = calculate_cost(npc_type, (enum terrain_types) map->grid_array[this_y][this_x + 1]);
 
             // We work with this cell only if it is reachable
-            if (neighbor_cost != INFINITY) {
+            if (neighbor_cost != MY_INFINITY) {
                 new_path_cost = neighbor_cost + this_cost;
 
                 // If we found a shorter path to this cell.
                 if (new_path_cost < distance[this_y][this_x + 1]) {
-                    // If distance of neighbor is INFINITY, it is not in the priority_queue yet.
-                    if (distance[this_y][this_x + 1] == INFINITY) {
+                    // If distance of neighbor is MY_INFINITY, it is not in the priority_queue yet.
+                    if (distance[this_y][this_x + 1] == MY_INFINITY) {
                         // Create a new heap_node for it and insert it.
                         struct heap_node new_heap_node;
                         new_heap_node.x = this_x + 1;
@@ -560,11 +561,11 @@ void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_H
         if (this_y + 1 < MAP_HEIGHT) {
             neighbor_cost = calculate_cost(npc_type, (enum terrain_types) map->grid_array[this_y + 1][this_x]);
 
-            if (neighbor_cost != INFINITY) {
+            if (neighbor_cost != MY_INFINITY) {
                 new_path_cost = neighbor_cost + this_cost;
 
                 if (new_path_cost < distance[this_y + 1][this_x]) {
-                    if (distance[this_y + 1][this_x] == INFINITY) {
+                    if (distance[this_y + 1][this_x] == MY_INFINITY) {
                         // Create a new heap_node for it and insert it.
                         struct heap_node new_heap_node;
                         new_heap_node.x = this_x;
@@ -588,13 +589,13 @@ void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_H
             neighbor_cost = calculate_cost(npc_type, (enum terrain_types) map->grid_array[this_y][this_x - 1]);
 
             // We work with this cell only if it is reachable
-            if (neighbor_cost != INFINITY) {
+            if (neighbor_cost != MY_INFINITY) {
                 new_path_cost = neighbor_cost + this_cost;
 
                 // If we found a shorter path to this cell.
                 if (new_path_cost < distance[this_y][this_x - 1]) {
-                    // If distance of neighbor is INFINITY, it is not in the priority_queue yet.
-                    if (distance[this_y][this_x - 1] == INFINITY) {
+                    // If distance of neighbor is MY_INFINITY, it is not in the priority_queue yet.
+                    if (distance[this_y][this_x - 1] == MY_INFINITY) {
                         // Create a new heap_node for it and insert it.
                         struct heap_node new_heap_node;
                         new_heap_node.x = this_x - 1;
@@ -619,13 +620,13 @@ void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_H
             neighbor_cost = calculate_cost(npc_type, (enum terrain_types) map->grid_array[this_y - 1][this_x + 1]);
 
             // We work with this cell only if it is reachable
-            if (neighbor_cost != INFINITY) {
+            if (neighbor_cost != MY_INFINITY) {
                 new_path_cost = neighbor_cost + this_cost;
 
                 // If we found a shorter path to this cell.
                 if (new_path_cost < distance[this_y - 1][this_x + 1]) {
-                    // If distance of neighbor is INFINITY, it is not in the priority_queue yet.
-                    if (distance[this_y - 1][this_x + 1] == INFINITY) {
+                    // If distance of neighbor is MY_INFINITY, it is not in the priority_queue yet.
+                    if (distance[this_y - 1][this_x + 1] == MY_INFINITY) {
                         // Create a new heap_node for it and insert it.
                         struct heap_node new_heap_node;
                         new_heap_node.x = this_x + 1;
@@ -650,13 +651,13 @@ void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_H
             neighbor_cost = calculate_cost(npc_type, (enum terrain_types) map->grid_array[this_y + 1][this_x + 1]);
 
             // We work with this cell only if it is reachable
-            if (neighbor_cost != INFINITY) {
+            if (neighbor_cost != MY_INFINITY) {
                 new_path_cost = neighbor_cost + this_cost;
 
                 // If we found a shorter path to this cell.
                 if (new_path_cost < distance[this_y + 1][this_x + 1]) {
-                    // If distance of neighbor is INFINITY, it is not in the priority_queue yet.
-                    if (distance[this_y + 1][this_x + 1] == INFINITY) {
+                    // If distance of neighbor is MY_INFINITY, it is not in the priority_queue yet.
+                    if (distance[this_y + 1][this_x + 1] == MY_INFINITY) {
                         // Create a new heap_node for it and insert it.
                         struct heap_node new_heap_node;
                         new_heap_node.x = this_x + 1;
@@ -681,13 +682,13 @@ void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_H
             neighbor_cost = calculate_cost(npc_type, (enum terrain_types) map->grid_array[this_y + 1][this_x - 1]);
 
             // We work with this cell only if it is reachable
-            if (neighbor_cost != INFINITY) {
+            if (neighbor_cost != MY_INFINITY) {
                 new_path_cost = neighbor_cost + this_cost;
 
                 // If we found a shorter path to this cell.
                 if (new_path_cost < distance[this_y + 1][this_x - 1]) {
-                    // If distance of neighbor is INFINITY, it is not in the priority_queue yet.
-                    if (distance[this_y + 1][this_x - 1] == INFINITY) {
+                    // If distance of neighbor is MY_INFINITY, it is not in the priority_queue yet.
+                    if (distance[this_y + 1][this_x - 1] == MY_INFINITY) {
                         // Create a new heap_node for it and insert it.
                         struct heap_node new_heap_node;
                         new_heap_node.x = this_x - 1;
@@ -712,13 +713,13 @@ void find_distance_map(Player *pc, enum entity_type npc_type, int distance[MAP_H
             neighbor_cost = calculate_cost(npc_type, (enum terrain_types) map->grid_array[this_y - 1][this_x - 1]);
 
             // We work with this cell only if it is reachable
-            if (neighbor_cost != INFINITY) {
+            if (neighbor_cost != MY_INFINITY) {
                 new_path_cost = neighbor_cost + this_cost;
 
                 // If we found a shorter path to this cell.
                 if (new_path_cost < distance[this_y - 1][this_x - 1]) {
-                    // If distance of neighbor is INFINITY, it is not in the priority_queue yet.
-                    if (distance[this_y - 1][this_x - 1] == INFINITY) {
+                    // If distance of neighbor is MY_INFINITY, it is not in the priority_queue yet.
+                    if (distance[this_y - 1][this_x - 1] == MY_INFINITY) {
                         // Create a new heap_node for it and insert it.
                         struct heap_node new_heap_node;
                         new_heap_node.x = this_x - 1;
