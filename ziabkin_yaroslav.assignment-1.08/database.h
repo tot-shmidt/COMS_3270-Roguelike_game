@@ -5,7 +5,7 @@
 #include <vector>
 #include <fstream>
 
-// ~~~ CLASSES ~~~
+// ~~~ CLASSES ~~
 
 class pokemon_db {
     // id,identifier,species_id,height,weight,base_experience,order,is_default
@@ -112,6 +112,21 @@ public:
     int type_id;
     int slot;
 };
+
+struct Database {
+    std::vector<pokemon_db> pokemon;
+    std::vector<moves_db> moves;
+    std::vector<pokemon_moves_db> pokemon_moves;
+    std::vector<pokemon_species_db> pokemon_species;
+    std::vector<experience_db> experience;
+    std::vector<type_names_db> type_names;
+    std::vector<pokemon_stats_db> pokemon_stats;
+    std::vector<stats_db> stats;
+    std::vector<pokemon_types_db> pokemon_types;
+};
+
+// Function to read DB into memory.
+int read_db_in_memory(struct Database *database);
 
 // ~~~ PARSING FUNCTIONS ~~~
 std::vector<pokemon_db> parse_pokemon(std::ifstream* csv_file);

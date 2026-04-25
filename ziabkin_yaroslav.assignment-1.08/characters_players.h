@@ -2,11 +2,14 @@
 #define CHARACTERS_PLAYERS_H
 
 #include "terrain_generator.h"
+#include <vector>
+#include "pokemon.h"
 
-#define INFINITY 1000000
+#define MY_INFINITY 1000000
 #define MAP_HEIGHT 21
 #define MAP_WIDTH 80
 #define WAIT_COST 12
+
 
 enum entity_type {
     PC = '@',
@@ -27,6 +30,7 @@ class Character {
         int y;
 
         enum entity_type type;
+        std::vector<Pokemon> available_pokemons;
 };
 
 class Player : public Character {
@@ -39,6 +43,7 @@ class NPC : public Character {
         enum directions direction;
         int defeated;
 };
+
 
 int place_pc_on_road(Player *pc, map *current_map);
 int initialize_pc(Player *player);

@@ -8,6 +8,7 @@
 
 #include "moves_queue.h"
 
+class Database;
 class Character;
 class Player;
 class NPC;
@@ -47,7 +48,7 @@ struct world {
     int current_map_x;
 };
 
-void create_map(map *new_map, struct world *this_world, int npc_num);
+void create_map(struct map *new_map, struct world *this_world, int npc_num, Database *database, int map_x, int map_y);
 void initialize_world(struct world *new_world, map *first_map);
 
 enum terrain_types {

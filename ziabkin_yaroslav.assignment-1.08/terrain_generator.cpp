@@ -1,5 +1,6 @@
 #include "terrain_generator.h"
 #include "characters_players.h"
+#include "database.h"
 #include "queue.h"
 #include <stdlib.h>
 
@@ -87,7 +88,7 @@ int create_exit(struct map *new_map, enum directions direction, struct world *th
     }
 }
 
-int create_npcs(map *new_map, int npc_num) {
+int create_npcs(map *new_map, int npc_num, Database *database, int new_x, int new_y, struct world *this_world) {
     // 1. Allocate enough space for entity_array of map struct, to keep all entitiy pointers.
     new_map->entity_array = (NPC **) malloc(sizeof (NPC *) * npc_num);
     new_map->entity_num = npc_num;
@@ -150,7 +151,7 @@ int create_npcs(map *new_map, int npc_num) {
             int cost = calculate_cost(entity_type, (enum terrain_types) new_map->grid_array[new_y][new_x]);
 
             // If cell is empty and cost is not infinity - we found a spot.
-            if (empty_cell && cost != INFINITY) {
+            if (empty_cell && cost != MY_INFINITY) {
                 break;
             }
         } while (1);
@@ -165,6 +166,47 @@ int create_npcs(map *new_map, int npc_num) {
         // Put this new entity into our 2D entity_map for collisions.
         // sugar: new_map->entity_map[new_y][new_x] = &(new_map->entity_array[i]);
         new_map->entity_map[new_y][new_x] = new_map->entity_array[i];
+
+        // -------------------------------------------------------------------------------
+        // From 1.08: give pokemons to new NPC
+        // -------------------------------------------------------------------------------
+
+        // Establish level of a new pokemon
+        int distance = abs(this_world->current_map_x - 200) + abs(this_world->current_map_y - 200);
+        int low_level, high_level;
+
+        if (distance <= 200) {
+            low_level = 1;
+            high_level = distance / 2;
+            
+            if (high_level == 0) {
+                high_level = 1;
+            }
+        } else {
+            high_level = 100;
+            low_level = (distance - 200) / 2;
+            
+            if (low_level == 0) {
+                low_level = 50;
+            }
+        }
+        int pokemon_level = (rand() % (high_level - low_level + 1)) + low_level;
+
+        // Create first mandatory pokemon
+        int random_row = rand() % database->pokemon.size();
+        int random_id = database->pokemon[random_row].species_id;
+
+        Pokemon new_pokemon(pokemon_level, random_id, database);
+        new_map->entity_array[i]->available_pokemons.push_back(new_pokemon);
+
+        // Take a change to create some extra pokemons
+        while ((rand() % 100 < 60) && new_map->entity_array[i]->available_pokemons.size() < 6) {
+            random_row = rand() % database->pokemon.size();
+            random_id = database->pokemon[random_row].species_id;
+            pokemon_level = (rand() % (high_level - low_level + 1)) + low_level;
+
+            new_map->entity_array[i]->available_pokemons.push_back(Pokemon(pokemon_level, random_id, database));
+        }
     }
 
     return 0;
@@ -318,7 +360,7 @@ int connect_exits(struct map *new_map, struct world *this_world) {
     return 0;
 }
 
-void create_map(struct map *new_map, struct world *this_world, int npc_num) {
+void create_map(struct map *new_map, struct world *this_world, int npc_num, Database *database, int map_x, int map_y) {
     struct queue q;
     queue_init(&q);
 
@@ -407,7 +449,7 @@ void create_map(struct map *new_map, struct world *this_world, int npc_num) {
 
 
     // 1.04: populate this map with NPCs.
-    create_npcs(new_map, npc_num);
+    create_npcs(new_map, npc_num, database, map_x, map_y, this_world);
 
     // 1.06: initialize moves_queue
     initialize_moves_queue(&(new_map->queue), npc_num + 1);

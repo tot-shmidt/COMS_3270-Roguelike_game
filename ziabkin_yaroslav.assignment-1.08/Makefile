@@ -1,5 +1,5 @@
-game: main.o terrain_generator.o queue.o characters_players.o min_heap.o moves_queue.o database.o
-	g++ -Wall -Werror -g main.o terrain_generator.o queue.o characters_players.o min_heap.o moves_queue.o database.o -o game -lncurses
+game: main.o terrain_generator.o queue.o characters_players.o min_heap.o moves_queue.o database.o pokemon.o
+	g++ -Wall -Werror -g main.o terrain_generator.o queue.o characters_players.o min_heap.o moves_queue.o database.o pokemon.o -o game -lncurses
 
 main.o: main.cpp terrain_generator.h queue.h characters_players.h moves_queue.h database.h
 	g++ -Wall -Werror -g -c main.cpp

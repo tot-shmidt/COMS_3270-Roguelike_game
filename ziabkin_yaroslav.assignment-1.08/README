@@ -7,3 +7,4 @@ SWIMMERs are marked with U character and they don't move. I will add this functi
 I have also implemented ncurses functionality in 1.05. Now, there is unbuffered input in the game, you can move @. Also, added several small features, like trainers list and trainers don't pathfind after being defeated. 
 For 1.06 I added code from 1.02 and it took a lot of hours to make it finally work all together. Added inheritance and classes from C++.
 For 1.07 you write "./game pokemon" or other flag from the list in the assignment. Used C++ functionality to work with files.
+For 1.08 I have implemented pokemons and that you can encounter them in tall grass. Also, they are being generated according to the rules and with databse involved.
