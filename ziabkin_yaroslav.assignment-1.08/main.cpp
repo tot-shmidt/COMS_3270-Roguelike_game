@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     struct world this_world;
     map *current_map = (map *) malloc(sizeof(map));
     initialize_world(&this_world, current_map);
-    create_map(current_map, &this_world, npc_num);
+    create_map(current_map, &this_world, npc_num, &database, this_world.current_map_x, this_world.current_map_y);
 
 // 2. Create PC
     Player pc;
@@ -253,7 +253,7 @@ int main(int argc, char *argv[]) {
                             if (this_world.world_maps[next_map_y][next_map_x] == NULL) {
                                 this_world.world_maps[next_map_y][next_map_x] = (map *) malloc(sizeof(map));
                                 
-                                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world, (rand() % 10) + 2); 
+                                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world, (rand() % 10) + 2, &database, next_map_x, next_map_y); 
                             }
                             
                             // Aim pointer
@@ -473,7 +473,7 @@ int main(int argc, char *argv[]) {
                             if (this_world.world_maps[next_map_y][next_map_x] == NULL) {
 
                                 this_world.world_maps[next_map_y][next_map_x] = (map *) malloc(sizeof(map));
-                                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world, (rand() % 10) + 2);
+                                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world, (rand() % 10) + 2, &database, next_map_x, next_map_x);
 
                                 // Make new map as our current map.
                                 current_map = this_world.world_maps[next_map_y][next_map_x];

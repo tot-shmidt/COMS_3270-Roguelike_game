@@ -28,7 +28,7 @@ Pokemon::Pokemon(int p_level, int p_species_id, struct Database *database) {
     int pokemon_stats_size = database->pokemon_stats.size();
     int assigned_stats = 0;
 
-    for (int i = 0; i < pokemon_stats_size; i = i + 5) {
+    for (int i = 0; i < pokemon_stats_size; i++) {
         pokemon_stats_db &record = database->pokemon_stats.at(i);
 
         if (record.pokemon_id == species_id) {
