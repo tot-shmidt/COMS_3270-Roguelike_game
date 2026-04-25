@@ -88,7 +88,7 @@ int create_exit(struct map *new_map, enum directions direction, struct world *th
     }
 }
 
-int create_npcs(map *new_map, int npc_num, Database *database, int new_x, int new_y) {
+int create_npcs(map *new_map, int npc_num, Database *database, int new_x, int new_y, struct world *this_world) {
     // 1. Allocate enough space for entity_array of map struct, to keep all entitiy pointers.
     new_map->entity_array = (NPC **) malloc(sizeof (NPC *) * npc_num);
     new_map->entity_num = npc_num;
@@ -172,7 +172,7 @@ int create_npcs(map *new_map, int npc_num, Database *database, int new_x, int ne
         // -------------------------------------------------------------------------------
 
         // Establish level of a new pokemon
-        int distance = abs(new_x - 200) + abs(new_y - 200);
+        int distance = abs(this_world->current_map_x - 200) + abs(this_world->current_map_y - 200);
         int low_level, high_level;
 
         if (distance <= 200) {
@@ -449,7 +449,7 @@ void create_map(struct map *new_map, struct world *this_world, int npc_num, Data
 
 
     // 1.04: populate this map with NPCs.
-    create_npcs(new_map, npc_num, database, map_x, map_y);
+    create_npcs(new_map, npc_num, database, map_x, map_y, this_world);
 
     // 1.06: initialize moves_queue
     initialize_moves_queue(&(new_map->queue), npc_num + 1);

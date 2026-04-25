@@ -562,9 +562,20 @@ int main(int argc, char *argv[]) {
                         
                         // If not defeated - battle
                         if (bumped_npc->defeated == 0) {
-                            mvprintw(0, 0, "Battle! Press 'Esc' to exit.");
+                            //refresh();
+                            clear();
+                            mvprintw(0, 5, "Battle! Trainer's pokemon list:");
+
+                            for (int i = 0; i < (int) bumped_npc->available_pokemons.size(); i++) {
+                                Pokemon *p = &(bumped_npc->available_pokemons[i]);
+
+                                mvprintw(3 + i, 5, "%d) %s (%d lvl): HP: %d", i+1, p->identifier.c_str(), p->current_level, p->actual_stats[0]);
+                            }
+
+                            mvprintw(18, 5, "Press 'Esc' to exit battle.");
                             refresh();
 
+                            // Loop until 'Esc' is pressed.
                             while (getch() != 27) {
                                 ;
                             }
@@ -659,25 +670,42 @@ int main(int argc, char *argv[]) {
         
         // This is not PC
         } else {
-            int step_cost = move_npc((NPC *) deq_node.entity, current_map, &pc);
+            NPC *attacking_npc = (NPC *) deq_node.entity;
+            int step_cost = move_npc(attacking_npc, current_map, &pc);
 
             if (step_cost == -1) {
-                mvprintw(0, 0, "Trainer got you! Press 'Esc' to exit");
-                refresh();
+                if (attacking_npc->defeated == 0) {
+                    // Clear the screen for the Battle UI
+                    clear();
+
+                    mvprintw(0, 5, "Trainer attacked you! Press 'Esc' to exit");
+
+                    for (int i = 0; i < (int) attacking_npc->available_pokemons.size(); i++) {
+                        Pokemon *p = &(attacking_npc->available_pokemons[i]);
+
+                        mvprintw(3 + i, 5, "%d) %s (%d lvl): HP: %d", i+1, p->identifier.c_str(), p->current_level, p->actual_stats[0]);
+                    }
+
+                    mvprintw(18, 5, "Press 'Esc' to exit battle.");
+                    refresh();
+
+                    // Wait for 'Esc' to exit.
+                    while (getch() != 27) {
+                        ;
+                    }
                 
-                while (getch() != 27) {
-                    ;
+                    attacking_npc->defeated = 1;
                 }
                 
-                ((NPC *)deq_node.entity)->defeated = 1;
+                // Time penalty
                 step_cost = WAIT_COST;
                 
+                // redraw the map
                 clear();
                 display_map_with_pc(current_map, &this_world, &pc);
             }
 
             deq_node.current_time += step_cost;
-
             mq_insert_node(&(current_map->queue), deq_node);
         }
     }
