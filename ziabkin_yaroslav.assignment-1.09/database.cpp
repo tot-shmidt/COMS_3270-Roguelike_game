@@ -43,7 +43,7 @@ int read_db_in_memory(struct Database *database) {
     // snprintf(destination, max_size, "format string", variables...)
     snprintf(path1, total_length1 + 1, "%s%s", base1, "pokemon.csv");
     snprintf(path2, total_length2 + 1, "%s%s", base2, "pokemon.csv");
-    snprintf(path3, total_length2 + 1, "%s%s", base3, "pokemon.csv");
+    snprintf(path3, total_length3 + 1, "%s%s", base3, "pokemon.csv");
 
     // 3. OPEN 3 locations, one by one.
     std::ifstream csv_file;
@@ -93,7 +93,7 @@ int read_db_in_memory(struct Database *database) {
 
     snprintf(path1, total_length1 + 1, "%s%s", base1, "moves.csv");
     snprintf(path2, total_length2 + 1, "%s%s", base2, "moves.csv");
-    snprintf(path3, total_length2 + 1, "%s%s", base3, "moves.csv");
+    snprintf(path3, total_length3 + 1, "%s%s", base3, "moves.csv");
 
     // Try first one:
     csv_file.open(path1);
@@ -138,7 +138,7 @@ int read_db_in_memory(struct Database *database) {
 
     snprintf(path1, total_length1 + 1, "%s%s", base1, "pokemon_moves.csv");
     snprintf(path2, total_length2 + 1, "%s%s", base2, "pokemon_moves.csv");
-    snprintf(path3, total_length2 + 1, "%s%s", base3, "pokemon_moves.csv");
+    snprintf(path3, total_length3 + 1, "%s%s", base3, "pokemon_moves.csv");
 
     // Try first one:
     csv_file.open(path1);
@@ -182,7 +182,7 @@ int read_db_in_memory(struct Database *database) {
 
     snprintf(path1, total_length1 + 1, "%s%s", base1, "pokemon_species.csv");
     snprintf(path2, total_length2 + 1, "%s%s", base2, "pokemon_species.csv");
-    snprintf(path3, total_length2 + 1, "%s%s", base3, "pokemon_species.csv");
+    snprintf(path3, total_length3 + 1, "%s%s", base3, "pokemon_species.csv");
 
     // Try first one:
     csv_file.open(path1);
@@ -224,7 +224,7 @@ int read_db_in_memory(struct Database *database) {
 
     snprintf(path1, total_length1 + 1, "%s%s", base1, "experience.csv");
     snprintf(path2, total_length2 + 1, "%s%s", base2, "experience.csv");
-    snprintf(path3, total_length2 + 1, "%s%s", base3, "experience.csv");
+    snprintf(path3, total_length3 + 1, "%s%s", base3, "experience.csv");
 
     // Try first one:
     csv_file.open(path1);
@@ -267,7 +267,7 @@ int read_db_in_memory(struct Database *database) {
 
     snprintf(path1, total_length1 + 1, "%s%s", base1, "type_names.csv");
     snprintf(path2, total_length2 + 1, "%s%s", base2, "type_names.csv");
-    snprintf(path3, total_length2 + 1, "%s%s", base3, "type_names.csv");
+    snprintf(path3, total_length3 + 1, "%s%s", base3, "type_names.csv");
 
     // Try first one:
     csv_file.open(path1);
@@ -310,7 +310,7 @@ int read_db_in_memory(struct Database *database) {
 
     snprintf(path1, total_length1 + 1, "%s%s", base1, "pokemon_stats.csv");
     snprintf(path2, total_length2 + 1, "%s%s", base2, "pokemon_stats.csv");
-    snprintf(path3, total_length2 + 1, "%s%s", base3, "pokemon_stats.csv");
+    snprintf(path3, total_length3 + 1, "%s%s", base3, "pokemon_stats.csv");
 
     // Try first one:
     csv_file.open(path1);
@@ -353,7 +353,7 @@ int read_db_in_memory(struct Database *database) {
 
     snprintf(path1, total_length1 + 1, "%s%s", base1, "stats.csv");
     snprintf(path2, total_length2 + 1, "%s%s", base2, "stats.csv");
-    snprintf(path3, total_length2 + 1, "%s%s", base3, "stats.csv");
+    snprintf(path3, total_length3 + 1, "%s%s", base3, "stats.csv");
 
     // Try first one:
     csv_file.open(path1);
@@ -395,7 +395,7 @@ int read_db_in_memory(struct Database *database) {
 
     snprintf(path1, total_length1 + 1, "%s%s", base1, "pokemon_types.csv");
     snprintf(path2, total_length2 + 1, "%s%s", base2, "pokemon_types.csv");
-    snprintf(path3, total_length2 + 1, "%s%s", base3, "pokemon_types.csv");
+    snprintf(path3, total_length3 + 1, "%s%s", base3, "pokemon_types.csv");
 
     // Try first one:
     csv_file.open(path1);
