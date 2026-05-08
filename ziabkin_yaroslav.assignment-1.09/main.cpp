@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     struct world this_world;
     map *current_map = (map *) malloc(sizeof(map));
     initialize_world(&this_world, current_map);
-    create_map(current_map, &this_world, npc_num);
+    create_map(current_map, &this_world, npc_num, &database, this_world.current_map_x, this_world.current_map_y);
 
 // 2. Create PC
     Player pc;
@@ -150,6 +150,9 @@ int main(int argc, char *argv[]) {
 
 // 5. Game loop
     int quit_game = 0;
+
+    // Suggest 3 pokemons for PC at the start of the game
+    select_initial_pokemon(&pc, &database);
 
     while (!quit_game) {
         // Extract node with minimum current_time
@@ -206,7 +209,6 @@ int main(int argc, char *argv[]) {
                         new_y++; break;
                     // South-West
                     case '1':
-                    case 'b':
                         new_y++; new_x--; break;
                     // West
                     case '4':
@@ -250,7 +252,7 @@ int main(int argc, char *argv[]) {
                             if (this_world.world_maps[next_map_y][next_map_x] == NULL) {
                                 this_world.world_maps[next_map_y][next_map_x] = (map *) malloc(sizeof(map));
                                 
-                                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world, (rand() % 10) + 2); 
+                                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world, (rand() % 10) + 2, &database, next_map_x, next_map_y); 
                             }
                             
                             // Aim pointer
@@ -281,48 +283,81 @@ int main(int argc, char *argv[]) {
                     case '>':
                         if (current_map->grid_array[pc.y][pc.x] == POK_CENTER || current_map->grid_array[pc.y][pc.x] == POK_MART) {
                             clear();
-                            mvprintw(0, 0, "Inside %c building. Press '<' to exit.", current_map->grid_array[pc.y][pc.x]);
-                            refresh();
-
-                            // Loading bar variables
-                            int i = 0;
-                            char a[5] = "\\|/-";
-                            int exit_building = 0;
-
-                            nodelay(stdscr, TRUE);
-
-                            while (!exit_building) {
-                                usleep(125000);
-                                mvaddch(1, i / 4, a[i%4]);
-                                refresh();
-
-                                // We are trying to empty the imput buffer here every outer while loop, as user can press several keys, like "asdf<"
-                                while ((input = getch()) != ERR) {
-                                    if (input == '<') {
-                                        exit_building = 1;
-                                    }
+                            
+                            if (current_map->grid_array[pc.y][pc.x] == POK_CENTER) {
+                                for (size_t i = 0; i < pc.available_pokemons.size(); i++) {
+                                    pc.available_pokemons[i].current_hp = pc.available_pokemons[i].max_hp;
                                 }
-
-                                i++;
-
-                                if (i / 4 >= MAP_WIDTH) {
-                                    i = 0;
-                                    move(1, 0);
-                                    clrtoeol();
+                                mvprintw(0, 0, "Welcome to the Pokemon Center!");
+                                mvprintw(1, 0, "Your pokemons are healed!");
+                            } else if (current_map->grid_array[pc.y][pc.x] == POK_MART) {
+                                pc.potions = 2;
+                                pc.revives = 2;
+                                pc.pokeballs = 5;
+                                mvprintw(0, 0, "Welcome to the Pokemart!");
+                                mvprintw(1, 0, "Your supplies are restocked!");
+                            }
+                            
+                            mvprintw(3, 0, "Press '<' to exit.");
+                            refresh();
+                            
+                            int exit_building = 0;
+                            while (!exit_building) {
+                                int building_input = getch();
+                                if (building_input == '<') {
+                                    exit_building = 1;
                                 }
                             }
 
-                            nodelay(stdscr, FALSE);
-
-                            // Redraw the map
+                    
                             clear();
                             display_map_with_pc(current_map, &this_world, &pc);
+                            
                         } else {
                             mvprintw(0, 0, "You have to stand on a poke-building!");
                             refresh();
                         }
                         break;
                     // Tainer list
+
+                    case 'b':
+                    case 'B': {
+                        clear();
+                        mvprintw(1, 2, "!!! YOUR BAG !!!");
+                        mvprintw(5, 2, "Potions: %d", pc.potions);
+                        mvprintw(4, 2, "Revives: %d", pc.revives);
+                        mvprintw(3, 2, "Pokeballs: %d", pc.pokeballs);
+                        
+                        mvprintw(7, 2, "[1] to use a Potion on your active Pokemon.");
+                        mvprintw(8, 2, "[Esc] to exit.");
+                        refresh();
+                        
+                        bool in_bag = true;
+                        while (in_bag) {
+                            int bag_input = getch();
+                            if (bag_input == '1') {
+                                if (pc.potions > 0 && pc.available_pokemons.size() > 0) {
+                                    pc.potions--;
+                                    pc.available_pokemons[0].current_hp += 20;
+                                    // Cap HP at max
+                                    if (pc.available_pokemons[0].current_hp > pc.available_pokemons[0].max_hp) {
+                                        pc.available_pokemons[0].current_hp = pc.available_pokemons[0].max_hp;
+                                    }
+                                    mvprintw(10, 2, "Used a potion! HP restored.");
+                                } else {
+                                    mvprintw(10, 2, "Out of potions!");
+                                }
+                                refresh();
+                            } else if (bag_input == 27) {
+                                in_bag = false;
+                            }
+                        }
+                        
+                        clear();
+                        display_map_with_pc(current_map, &this_world, &pc);
+                        break;
+                    }
+
                     case 't': {
                         int exit_menu = 0;
                         // How many lines are reserved to print trainers
@@ -470,7 +505,7 @@ int main(int argc, char *argv[]) {
                             if (this_world.world_maps[next_map_y][next_map_x] == NULL) {
 
                                 this_world.world_maps[next_map_y][next_map_x] = (map *) malloc(sizeof(map));
-                                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world, (rand() % 10) + 2);
+                                create_map(this_world.world_maps[next_map_y][next_map_x], &this_world, (rand() % 10) + 2, &database, next_map_x, next_map_x);
 
                                 // Make new map as our current map.
                                 current_map = this_world.world_maps[next_map_y][next_map_x];
@@ -549,7 +584,7 @@ int main(int argc, char *argv[]) {
                         refresh();
                     }
                     // Check if terrain is not passible
-                    else if (terrain_cost == INFINITY) {
+                    else if (terrain_cost == MY_INFINITY) {
                         mvprintw(0, 0, "You can't cross this impassible object.");
                         refresh();
                     }
@@ -559,11 +594,98 @@ int main(int argc, char *argv[]) {
                         
                         // If not defeated - battle
                         if (bumped_npc->defeated == 0) {
-                            mvprintw(0, 0, "Battle! Press 'Esc' to exit.");
+                            //refresh();
+                            clear();
+                            mvprintw(0, 5, "Battle! Trainer's pokemon list:");
+
+                            for (int i = 0; i < (int) bumped_npc->available_pokemons.size(); i++) {
+                                Pokemon *p = &(bumped_npc->available_pokemons[i]);
+
+                                mvprintw(3 + i, 5, "%d) %s (%d lvl): HP: %d", i+1, p->identifier.c_str(), p->current_level, p->actual_stats[0]);
+                            }
+
+                            mvprintw(18, 5, "Press 'Esc' to exit battle.");
                             refresh();
 
-                            while (getch() != 27) {
-                                ;
+                            // Battle UI
+                            // Battle UI
+                            bool battle_active = true;
+                            while (battle_active) {
+                                clear();
+                                mvprintw(1, 2, "!!! POKEMON BATTLE !!!");
+                                
+                                Pokemon* my_poke = NULL;
+                                Pokemon* enemy_poke = NULL;
+                                
+                                if (pc.available_pokemons.size() > 0) {
+                                    my_poke = &pc.available_pokemons[0];
+                                    mvprintw(3, 2, "Your %s: %d / %d HP", my_poke->identifier.c_str(), my_poke->current_hp, my_poke->max_hp);
+                                }
+
+                                if (bumped_npc->available_pokemons.size() > 0) {
+                                    enemy_poke = &bumped_npc->available_pokemons[0];
+                                    mvprintw(5, 2, "Enemy %s: %d / %d HP", enemy_poke->identifier.c_str(), enemy_poke->current_hp, enemy_poke->max_hp);
+                                }
+
+                                mvprintw(8, 2, "[1] Fight");
+                                mvprintw(9, 2, "[2] Bag");
+                                mvprintw(10, 2, "[3] Switch pokemon");
+                                mvprintw(11, 2, "[4] Run away");
+                                mvprintw(13, 2, "Your turn: ");
+                                refresh();
+
+                                int action = getch();
+                                switch (action) {
+                                    case '1': {
+                                        int power = 40;
+                                        int my_attack = my_poke->actual_stats[1];
+                                        int enemy_defense = enemy_poke->actual_stats[2];
+                                        
+                                        int damage = calculate_damage(my_poke->current_level, power, my_attack, enemy_defense, false, 1.0f);
+                                        enemy_poke->current_hp -= damage;
+                                        if (enemy_poke->current_hp < 0) enemy_poke->current_hp = 0;
+                                        
+                                        mvprintw(15, 2, "You dealt %d damage!", damage);
+                                        
+                                        if (enemy_poke->current_hp > 0) {
+                                            int enemy_dmg = calculate_damage(enemy_poke->current_level, power, enemy_poke->actual_stats[1], my_poke->actual_stats[2], false, 1.0f);
+                                            my_poke->current_hp -= enemy_dmg;
+                                            if (my_poke->current_hp < 0) my_poke->current_hp = 0;
+                                            mvprintw(16, 2, "You receive %d damage", enemy_dmg);
+                                        } else {
+                                            mvprintw(16, 2, "You won the battle!");
+                                            battle_active = false;
+                                            bumped_npc->defeated = 1;
+                                        }
+
+                                        if (my_poke->current_hp <= 0) {
+                                            mvprintw(17, 2, "Your pokemon is knocked out!");
+                                            battle_active = false;
+                                        }
+
+                                        refresh();
+                                        usleep(1000000);
+                                        break;
+                                    }
+                                    case '2':
+                                        mvprintw(15, 2, "Potions: %d", pc.potions);
+                                        refresh();
+                                        usleep(1000000);
+                                        break;
+                                    case '3':
+                                        mvprintw(15, 2, "Switch pokemon:");
+                                        refresh();
+                                        usleep(1000000);
+                                        break;
+                                    case '4':
+                                        mvprintw(15, 2, "Can't run from trainer!");
+                                        refresh();
+                                        usleep(1000000);
+                                        break;
+                                    case 27:
+                                        battle_active = false;
+                                        break;
+                                }
                             }
                             
                             bumped_npc->defeated = 1;
@@ -574,7 +696,9 @@ int main(int argc, char *argv[]) {
                             mvprintw(0, 0, "You have defeated this trainer!");
                             refresh();
                         }
+                    // ----------------------------------------------------------------------------------------------------------
                     // Valid place to make a move.
+                    // ----------------------------------------------------------------------------------------------------------
                     } else {
                         successful_move = 1;
                         pc.x = new_x;
@@ -583,10 +707,12 @@ int main(int argc, char *argv[]) {
                         find_distance_map(&pc, RIVAL, current_map->rival_dist_map, current_map);
                         find_distance_map(&pc, HIKER, current_map->hiker_dist_map, current_map);
 
+                        // Pokemon encountering logic in TALL GRASS
                         if (current_map->grid_array[new_y][new_x] == TALL_GRASS) {
                             if (rand() % 100 < 10) {
-                                // choose random pokemon id from the database.
-                                int species_id = 1 + (rand() % 1090);
+                                // choose random pokemon id from the database by first selecting row, and then id from thar row.
+                                int random_row = rand() % database.pokemon.size();
+                                int id_from_row = database.pokemon[random_row].species_id;
 
                                 int manh_distance = abs(this_world.current_map_x - 200) + abs(this_world.current_map_y - 200);
                                 int lowest_level, highest_level;
@@ -606,8 +732,8 @@ int main(int argc, char *argv[]) {
                                 // Calculate new lavel in the given range
                                 int new_level = lowest_level + (rand() % (highest_level - lowest_level + 1));
 
-                                // CReate pokemon
-                                Pokemon new_poke(new_level, species_id, &database);
+                                // Create pokemon
+                                Pokemon new_poke(new_level, id_from_row, &database);
 
                                 clear();
                                 mvprintw(2, 5, "A wild pokemon %s appeared!", new_poke.identifier.c_str());
@@ -624,15 +750,103 @@ int main(int argc, char *argv[]) {
 
                                 mvprintw(15, 5, "Moves:");
                                 for (size_t i = 0; i < new_poke.move_set.size(); i++) {
-                                    mvprintw(16 + i, 5, "%d) %s",(int) i, new_poke.move_set[i].c_str());
+                                    mvprintw(16 + i, 5, "%d) %s",(int) i + 1, new_poke.move_set[i].c_str());
                                 }
 
-                                mvprintw(20, 5, "Press ESC to exit.");
+                                mvprintw(20, 5, "Press [s] to start battle:");
                                 refresh();
+                                getch();
 
-                                // Wait for the user to press ESC
-                                while (getch() != 27) {
-                                    ;
+                                // Wait for user to read stats before starting battle
+                                mvprintw(20, 5, "Press any key to start battle!");
+                                refresh();
+                                getch(); // Pauses so you can read the stats!
+
+                                // Fight with a wild pokemon
+                                bool wild_battle_active = true;
+                                while (wild_battle_active) {
+                                    clear();
+                                    mvprintw(1, 2, "!!! Wild pokemon battle !!!");
+                                    
+                                    // 1. DECLARE MY_POKE HERE for the whole loop
+                                    Pokemon* my_poke = NULL;
+                                    
+                                    if (pc.available_pokemons.size() > 0) {
+                                        my_poke = &pc.available_pokemons[0];
+                                        mvprintw(3, 2, "Your %s: %d / %d HP", my_poke->identifier.c_str(), my_poke->current_hp, my_poke->max_hp);
+                                    }
+
+                                    mvprintw(5, 2, "Wild %s: %d / %d HP", new_poke.identifier.c_str(), new_poke.current_hp, new_poke.max_hp);
+
+                                    mvprintw(8, 2, "[1] Fight");
+                                    mvprintw(9, 2, "[2] Toss pokeball");
+                                    mvprintw(10, 2, "[3] Switch pokemon");
+                                    mvprintw(11, 2, "[4] Run away");
+                                    mvprintw(13, 2, "Your turn: ");
+                                    refresh();
+
+                                    int action = getch();
+                                    switch (action) {
+                                        case '1': {
+                                            if (my_poke != NULL) {
+                                                int damage = calculate_damage(my_poke->current_level, 40, my_poke->actual_stats[1], new_poke.actual_stats[2], false, 1.0f);
+                                                new_poke.current_hp -= damage;
+                                                if (new_poke.current_hp < 0) new_poke.current_hp = 0;
+                                                
+                                                mvprintw(15, 2, "You made %d damage!", damage);
+                                                
+                                                if (new_poke.current_hp > 0) {
+                                                    int enemy_dmg = calculate_damage(new_poke.current_level, 40, new_poke.actual_stats[1], my_poke->actual_stats[2], false, 1.0f);
+                                                    my_poke->current_hp -= enemy_dmg;
+                                                    if (my_poke->current_hp < 0) my_poke->current_hp = 0;
+                                                    mvprintw(16, 2, "Wild pokemon made %d damage!", enemy_dmg);
+                                                } else {
+                                                    mvprintw(16, 2, "Wild pokemon is knocked out.");
+                                                    wild_battle_active = false;
+                                                }
+                                            }
+                                            refresh(); usleep(2000000);
+                                            break;
+                                        }
+                                        case '2':
+                                            if (pc.pokeballs > 0) {
+                                                pc.pokeballs--;
+                                                if (pc.available_pokemons.size() < 6) {
+                                                    mvprintw(15, 2, "Tossed a pokeball. You got it!");
+                                                    pc.available_pokemons.push_back(new_poke);
+                                                    wild_battle_active = false;
+                                                } else {
+                                                    mvprintw(15, 2, "Tossed a pokeball. It failed!");
+                                                }
+                                            } else {
+                                                mvprintw(15, 2, "Get more pokeballs!");
+                                            }
+                                            refresh(); usleep(2000000);
+                                            break;
+                                        case '3':
+                                            mvprintw(15, 2, "Switch pokemon.");
+                                            refresh(); usleep(1000000);
+                                            break;
+                                        case '4': // Run
+                                            if (rand() % 100 < 50) {
+                                                mvprintw(15, 2, "You ran away successfully.");
+                                                wild_battle_active = false;
+                                            } else {
+                                                mvprintw(15, 2, "Could not run away.");
+                                                
+                                                if (my_poke != NULL) {
+                                                    int enemy_dmg = calculate_damage(new_poke.current_level, 40, new_poke.actual_stats[1], my_poke->actual_stats[2], false, 1.0f);
+                                                    my_poke->current_hp -= enemy_dmg;
+                                                    if (my_poke->current_hp < 0) my_poke->current_hp = 0;
+                                                    mvprintw(16, 2, "Wild pokemon attacked! Made %d damage!", enemy_dmg);
+                                                }
+                                            }
+                                            refresh(); usleep(2000000);
+                                            break;
+                                        case 27: // Esc
+                                            wild_battle_active = false;
+                                            break;
+                                    }
                                 }
 
                                 clear();
@@ -652,25 +866,103 @@ int main(int argc, char *argv[]) {
         
         // This is not PC
         } else {
-            int step_cost = move_npc((NPC *) deq_node.entity, current_map, &pc);
+            NPC *attacking_npc = (NPC *) deq_node.entity;
+            int step_cost = move_npc(attacking_npc, current_map, &pc);
 
             if (step_cost == -1) {
-                mvprintw(0, 0, "Trainer got you! Press 'Esc' to exit");
-                refresh();
-                
-                while (getch() != 27) {
-                    ;
+                if (attacking_npc->defeated == 0) {
+                    clear();
+                    mvprintw(0, 5, "Trainer attack! Press any key to start battle!");
+                    refresh();
+                    getch();
+
+                    bool battle_active = true;
+                    while (battle_active) {
+                        clear();
+                        mvprintw(1, 2, "!!! POKEMON BATTLE !!!");
+                        
+                        Pokemon* my_poke = NULL;
+                        Pokemon* enemy_poke = NULL;
+                        
+                        if (pc.available_pokemons.size() > 0) {
+                            my_poke = &pc.available_pokemons[0];
+                            mvprintw(3, 2, "Your %s: %d / %d HP", my_poke->identifier.c_str(), my_poke->current_hp, my_poke->max_hp);
+                        }
+
+                        if (attacking_npc->available_pokemons.size() > 0) {
+                            enemy_poke = &attacking_npc->available_pokemons[0];
+                            mvprintw(5, 2, "Enemy %s: %d / %d HP", enemy_poke->identifier.c_str(), enemy_poke->current_hp, enemy_poke->max_hp);
+                        }
+
+                        mvprintw(8, 2, "[1] Fight");
+                        mvprintw(9, 2, "[2] Bag");
+                        mvprintw(10, 2, "[3] Pokemon (Switch)");
+                        mvprintw(11, 2, "[4] Run");
+                        mvprintw(13, 2, "Select an action: ");
+                        refresh();
+
+                        int action = getch();
+                        switch (action) {
+                            case '1': {
+                                if (my_poke != NULL && enemy_poke != NULL) {
+                                    int power = 40; 
+                                    int damage = calculate_damage(my_poke->current_level, power, my_poke->actual_stats[1], enemy_poke->actual_stats[2], false, 1.0f);
+                                    enemy_poke->current_hp -= damage;
+                                    if (enemy_poke->current_hp < 0) enemy_poke->current_hp = 0;
+                                    
+                                    mvprintw(15, 2, "You made %d damage!", damage);
+                                    
+                                    if (enemy_poke->current_hp > 0) {
+                                        int enemy_dmg = calculate_damage(enemy_poke->current_level, power, enemy_poke->actual_stats[1], my_poke->actual_stats[2], false, 1.0f);
+                                        my_poke->current_hp -= enemy_dmg;
+                                        if (my_poke->current_hp < 0) my_poke->current_hp = 0;
+                                        mvprintw(16, 2, "Enemy made %d damage!", enemy_dmg);
+                                    } else {
+                                        mvprintw(16, 2, "Enemy is knocked out");
+                                        battle_active = false;
+                                        attacking_npc->defeated = 1;
+                                    }
+
+                                    if (my_poke->current_hp <= 0) {
+                                        mvprintw(17, 2, "Your Pokemon is knocked out.");
+                                        battle_active = false;
+                                    }
+                                }
+                                refresh();
+                                usleep(2000000); 
+                                break;
+                            }
+                            case '2':
+                                mvprintw(15, 2, "Potions: %d", pc.potions);
+                                refresh();
+                                usleep(1000000);
+                                break;
+                            case '3': // Switch
+                                mvprintw(15, 2, "Switching Pokemon.");
+                                refresh();
+                                usleep(1000000);
+                                break;
+                            case '4':
+                                mvprintw(15, 2, "Can't run from a trainer battle!");
+                                refresh();
+                                usleep(1000000);
+                                break;
+                            case 27:
+                                battle_active = false;
+                                break;
+                        }
+                    }
                 }
                 
-                ((NPC *)deq_node.entity)->defeated = 1;
+                // Time penalty
                 step_cost = WAIT_COST;
                 
+                // redraw the map
                 clear();
                 display_map_with_pc(current_map, &this_world, &pc);
             }
 
             deq_node.current_time += step_cost;
-
             mq_insert_node(&(current_map->queue), deq_node);
         }
     }

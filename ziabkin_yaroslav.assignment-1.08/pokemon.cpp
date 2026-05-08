@@ -1,9 +1,6 @@
 #include "pokemon.h"
 #include "database.h"
 #include <cmath>
-#include "characters_players.h"
-#include <ncurses.h>
-#include <unistd.h>
 // #include <iterator>
 
 Pokemon::Pokemon(int p_level, int p_species_id, struct Database *database) {
@@ -28,7 +25,7 @@ Pokemon::Pokemon(int p_level, int p_species_id, struct Database *database) {
     int pokemon_stats_size = database->pokemon_stats.size();
     int assigned_stats = 0;
 
-    for (int i = 0; i < pokemon_stats_size; i++) {
+    for (int i = 0; i < pokemon_stats_size; i = i + 5) {
         pokemon_stats_db &record = database->pokemon_stats.at(i);
 
         if (record.pokemon_id == species_id) {
@@ -62,19 +59,7 @@ Pokemon::Pokemon(int p_level, int p_species_id, struct Database *database) {
     std::vector<int> potential_moves_id;
     for (pokemon_moves_db &move : database->pokemon_moves) {
         if (move.pokemon_id == species_id && move.pokemon_move_method_id == 1 && move.level <= current_level) {
-            // Eliminate dublicate moves
-            bool duplicate = false;
-
-            for (int i = 0; i < potential_moves_id.size(); i++) {
-                if (move.move_id == potential_moves_id[i]) {
-                    duplicate = true;
-                    break;
-                }
-            }
-
-            if (duplicate == false) {
-                potential_moves_id.push_back(move.move_id);
-            } 
+            potential_moves_id.push_back(move.move_id);
         }
     }
 
@@ -106,79 +91,4 @@ Pokemon::Pokemon(int p_level, int p_species_id, struct Database *database) {
             }
         }
     }
-}
-
-// Select pokemons at the start of the game
-int select_initial_pokemon(Player *pc, Database *database) {
-    mvprintw(0, 0, "Who are your initial pokemons? Press 1, 2 or 3 to select:");
-
-    
-    
-    // Create 3 pokemons
-    int new_level = 1;
-
-    int random_row1 = rand() % database->pokemon.size();
-    int random_row2 = rand() % database->pokemon.size();
-    int random_row3 = rand() % database->pokemon.size();
-
-    int id1_from_row = database->pokemon[random_row1].species_id;
-    int id2_from_row = database->pokemon[random_row2].species_id;
-    int id3_from_row = database->pokemon[random_row3].species_id;
-
-
-    Pokemon poke1(new_level, id1_from_row, database);
-    // poke1.identifier = "DEBUG";
-    Pokemon poke2(new_level, id2_from_row, database);
-    Pokemon poke3(new_level, id3_from_row, database);
-
-    // Tablichka s nomerom
-    mvprintw(3, 2, "Pokemon 1:");
-    mvprintw(3, 25, "Pokemon 2:");
-    mvprintw(3, 48, "Pokemon 3:");
-    
-    // Row with names
-    mvprintw(5, 2, "Name: %s", poke1.identifier.c_str());
-    mvprintw(5, 25, "Name: %s", poke2.identifier.c_str());
-    mvprintw(5, 48, "Name: %s", poke3.identifier.c_str());
-
-    // Loading bar variables
-    int i = 0;
-    char a[5] = {'\\','|','/','-'};
-
-    int pokemon_selected = 0;
-
-    nodelay(stdscr, TRUE);
-    char input;
-
-    while (!pokemon_selected) {
-        usleep(125000);
-        mvaddch(1, i / 4, a[i%4]);
-        refresh();
-
-        while ((input = getch()) != ERR) {
-            if (input == '1') {
-                pc->available_pokemons.push_back(poke1);
-                pokemon_selected = 1;
-            } else if (input == '2') {
-                pc->available_pokemons.push_back(poke2);
-                pokemon_selected = 1;
-            } else if (input == '3') {
-                pc->available_pokemons.push_back(poke3);
-                pokemon_selected = 1;
-            }
-        }
-
-        i++;
-
-        if (i / 4 >= MAP_WIDTH) {
-            i = 0;
-            move(1, 0);
-            clrtoeol();
-        }
-    }
-
-    nodelay(stdscr, FALSE);
-    clear();
-
-    return 0;
 }
