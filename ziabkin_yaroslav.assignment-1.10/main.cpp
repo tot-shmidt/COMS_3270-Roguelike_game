@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>  // For usleep
 #include <ncurses.h>
+#include "tic_tac_toe.h"
 
 // For 1.07
 #include <iostream>
@@ -31,6 +32,8 @@ void init_ncurses() {
     init_pair(COLOR_WHITE, COLOR_WHITE, COLOR_BLACK);
     init_pair(COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
     init_pair(10, COLOR_WHITE, COLOR_RED);
+    init_pair(11, COLOR_BLACK, COLOR_WHITE);
+    init_pair(12, COLOR_WHITE, COLOR_BLACK);
     init_pair(COLOR_RED, COLOR_RED, COLOR_BLACK);
     init_pair(COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
     init_pair(COLOR_BLUE, COLOR_BLUE, COLOR_BLACK);
@@ -147,6 +150,8 @@ int main(int argc, char *argv[]) {
 
 // 4. Initialize ncureses
     init_ncurses();
+
+    start_tic_tac_toe(&pc); // FOR DEBUG
 
 // 5. Game loop
     int quit_game = 0;
@@ -298,7 +303,10 @@ int main(int argc, char *argv[]) {
                                 mvprintw(1, 0, "Your supplies are restocked!");
                             }
                             
+                            // Adding tic-tac-toe casino for 1.10:
+
                             mvprintw(3, 0, "Press '<' to exit.");
+                            mvprintw(23, 51, "Secret [g]ambling room -->");
                             refresh();
                             
                             int exit_building = 0;
@@ -306,6 +314,11 @@ int main(int argc, char *argv[]) {
                                 int building_input = getch();
                                 if (building_input == '<') {
                                     exit_building = 1;
+                                } else if (building_input == 'g' || building_input == 'G') {
+                                    // start tic-tac-toe mini-game.
+                                    start_tic_tac_toe(&pc);
+                                    mvprintw(23, 51, "Press '<' to exit.");
+                                    refresh();
                                 }
                             }
 
@@ -870,6 +883,7 @@ int main(int argc, char *argv[]) {
             int step_cost = move_npc(attacking_npc, current_map, &pc);
 
             if (step_cost == -1) {
+                /*
                 if (attacking_npc->defeated == 0) {
                     clear();
                     mvprintw(0, 5, "Trainer attack! Press any key to start battle!");
@@ -954,12 +968,14 @@ int main(int argc, char *argv[]) {
                     }
                 }
                 
-                // Time penalty
-                step_cost = WAIT_COST;
                 
                 // redraw the map
                 clear();
                 display_map_with_pc(current_map, &this_world, &pc);
+                */
+
+                // Time penalty
+                step_cost = WAIT_COST;
             }
 
             deq_node.current_time += step_cost;
