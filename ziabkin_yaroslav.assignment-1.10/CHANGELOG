@@ -1,0 +1,28 @@
+February 3: Started working. Created queue data structure.
+February 4: was able to print maps without roads, exits and poke buildings.
+February 5: created roads and connected them. Placed pokemart and pokecenter on the map.
+February 14: chandeg walls type
+February 16: added PC and NPC to the game
+February 17: added a function for finding cost of a terrain
+February 21: created min heap data structure
+February 22: implemented Dijkstra's algorithm
+February 27: adapted min_heap to work with NPC and PC
+February 28: created moving logic for RIVAL and HIKER
+March 1: created logic for other NPCs
+March 2: created main game loop
+March 4: rewrote logic in terrain_generator to work with NPCs creation
+March 5: fixed a bug with SENTY NPC and polished minor things.
+March 23: Integrated ncurses and allowed @ to move
+March 24: Added menu with trainers on 't' and made trainers not to pathfind after being defeated.
+March 28: Added classes and inheritance
+March 29: Added functionality to move to different maps
+Match 30: Added fly function and that proper handling of NPCs and their time across all the map
+April 6: Reworked command line arguments loop
+April 7: Finished parsing first half of the files
+April 8: Finished parsing second half of the files
+April 16: Refactorer how the database is being loaded in memory
+April 17: Created Pokemon class and its constructor
+April 18: Made possible to find a pokemon in a tall grass
+April 23: Made fights and updated datastructures
+April 24: Made pokecenters and pokemarts to work
+April 25: Fixed bugs so a battle can happen when NPC bump into PC
