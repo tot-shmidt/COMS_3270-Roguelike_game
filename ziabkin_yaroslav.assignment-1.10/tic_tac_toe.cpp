@@ -79,7 +79,7 @@ void print_board() {
     */
 }
 
-void print_symbol(char symbol, int cell) {
+void print_symbol(char symbol, int cell, struct game_state *game_state, bool colorful) {
     int horizontal_offset = (SCR_WIDTH - 17 ) / 2;
     int vertical_offset = (SCR_HEIGHT - 11) / 2;
 
@@ -97,34 +97,45 @@ void print_symbol(char symbol, int cell) {
         case 3: x = horizontal_offset + 12; y = vertical_offset + 8; break;
     }
 
+    // Determine collor we need to use to print. 0 for Player, 1 for Computer
+    int color;
+    if (game_state->turn == 0 && colorful) {
+        color = 13;
+    } else if (game_state->turn == 1 && colorful) {
+        color = 14;
+    } else {
+        color = 11;
+    }
+
+    // Print symbol with correct color
     if (symbol == 'o') {
     // /---\. 
     // |   |
     // \---/
-        mvaddch(y, x, '/' | COLOR_PAIR(11));
-        mvaddch(y, x+1, ACS_S1 | COLOR_PAIR(11));
-        mvaddch(y, x+2, ACS_S1 | COLOR_PAIR(11));
-        mvaddch(y, x+3, ACS_S1 | COLOR_PAIR(11));
-        mvaddch(y, x+4, '\\' | COLOR_PAIR(11));
-        mvaddch(y+1, x+4, '|' | COLOR_PAIR(11));
-        mvaddch(y+2, x+4, '/' | COLOR_PAIR(11));
-        mvaddch(y+2, x+1, ACS_S9 | COLOR_PAIR(11));
-        mvaddch(y+2, x+2, ACS_S9 | COLOR_PAIR(11));
-        mvaddch(y+2, x+3, ACS_S9 | COLOR_PAIR(11));
-        mvaddch(y+2, x, '\\' | COLOR_PAIR(11));
-        mvaddch(y+1, x, '|' | COLOR_PAIR(11));
+        mvaddch(y, x, '/' | COLOR_PAIR(color));
+        mvaddch(y, x+1, ACS_S1 | COLOR_PAIR(color));
+        mvaddch(y, x+2, ACS_S1 | COLOR_PAIR(color));
+        mvaddch(y, x+3, ACS_S1 | COLOR_PAIR(color));
+        mvaddch(y, x+4, '\\' | COLOR_PAIR(color));
+        mvaddch(y+1, x+4, '|' | COLOR_PAIR(color));
+        mvaddch(y+2, x+4, '/' | COLOR_PAIR(color));
+        mvaddch(y+2, x+1, ACS_S9 | COLOR_PAIR(color));
+        mvaddch(y+2, x+2, ACS_S9 | COLOR_PAIR(color));
+        mvaddch(y+2, x+3, ACS_S9 | COLOR_PAIR(color));
+        mvaddch(y+2, x, '\\' | COLOR_PAIR(color));
+        mvaddch(y+1, x, '|' | COLOR_PAIR(color));
 
     } else if (symbol == 'x') {
     // \   /
     //  ---
     // /   \.
-        mvaddch(y, x, '\\' | COLOR_PAIR(11));
-        mvaddch(y, x+4, '/' | COLOR_PAIR(11));
-        mvaddch(y+1, x+1, ACS_HLINE | COLOR_PAIR(11));
-        mvaddch(y+1, x+2, ACS_HLINE | COLOR_PAIR(11));
-        mvaddch(y+1, x+3, ACS_HLINE | COLOR_PAIR(11));
-        mvaddch(y+2, x+4, '\\' | COLOR_PAIR(11));
-        mvaddch(y+2, x, '/' | COLOR_PAIR(11));
+        mvaddch(y, x, '\\' | COLOR_PAIR(color));
+        mvaddch(y, x+4, '/' | COLOR_PAIR(color));
+        mvaddch(y+1, x+1, ACS_HLINE | COLOR_PAIR(color));
+        mvaddch(y+1, x+2, ACS_HLINE | COLOR_PAIR(color));
+        mvaddch(y+1, x+3, ACS_HLINE | COLOR_PAIR(color));
+        mvaddch(y+2, x+4, '\\' | COLOR_PAIR(color));
+        mvaddch(y+2, x, '/' | COLOR_PAIR(color));
     } else {
         ;
     }
@@ -133,13 +144,21 @@ void print_symbol(char symbol, int cell) {
 }
 
 // Consolidate all the function calls to draw the screen of the game
-void set_up_screen() {
-    paint_background();
+void set_up_screen(struct game_state * game_state) {
+    // To not erase symbols after the game ends
+    if (game_state->game_end != true) {
+        paint_background();
+    }
+
     print_frame();
     print_header();
     print_board();
 
     // Write here logic for stats TO-DO
+    attron(COLOR_PAIR(11));
+    mvprintw(2, 3, "Your score:  %d", game_state->pc_wins);
+    mvprintw(3, 3, "Rival score: %d", game_state->npc_wins);
+    attroff(COLOR_PAIR(11));
 }
 
 // Reset game state for a new round
@@ -151,7 +170,7 @@ void prepare_new_round(struct game_state * game_state) {
     game_state->number_of_turns = 0;
 
     // Erase all the symbols from the game board(redraw everything);
-    set_up_screen();
+    set_up_screen(game_state);
     refresh();
 }
 
@@ -180,15 +199,35 @@ bool check_win(struct game_state & game_state, char symbol) {
     }
 }
 
+// Print in color winning sequence
+void paint_win_sequence(char symbol, struct game_state *game_state) {
+    std::vector<char> * arr = &(game_state->cells_vector);
+    // Find winning cells
+    const int win_lines[8][3] = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
+    
+    for (int i = 0; i < 8; i++) {
+        if (arr->at(win_lines[i][0]) == symbol && arr->at(win_lines[i][1]) == symbol && arr->at(win_lines[i][2]) == symbol) {
+            // Change color based on who won. Red for computer, green for pc.
+            print_symbol(symbol, win_lines[i][0] + 1, game_state, true);
+            print_symbol(symbol, win_lines[i][1] + 1, game_state, true);
+            print_symbol(symbol, win_lines[i][2] + 1, game_state, true);
+
+            break;
+        }
+    }
+}
+
 
 void start_tic_tac_toe(Player *pc){
-    // Add background, frame, header, cross in the middle
-    clear();
-    set_up_screen();
-    refresh();
-
     // variables for the game
     struct game_state game_state;
+
+    // Add background, frame, header, cross in the middle
+    clear();
+    set_up_screen(&game_state);
+    refresh();
+
+    
 
     // main game loop
     while (!(game_state.game_end)) {
@@ -197,6 +236,7 @@ void start_tic_tac_toe(Player *pc){
             bool valid_input = false;
             char symbol = game_state.pc_symbol;
 
+            flushinp(); // Clears buffer that could be filled during usleep()
             int input;
             while (!valid_input) {
                 input = getch() - '0';
@@ -209,18 +249,24 @@ void start_tic_tac_toe(Player *pc){
 
             // Have to place figure in the cell.
             game_state.cells_vector.at(input - 1) = symbol;
-            print_symbol(symbol, input);
+            print_symbol(symbol, input, &game_state, false);
             game_state.number_of_turns++;
 
             // check for win condition
             if  (check_win(game_state, symbol)) {
                     game_state.pc_wins++;
-                    usleep(1500000);
-                    prepare_new_round(&game_state);
+                    usleep(1000000);
 
+                    // paint winning sequence 
+                    paint_win_sequence(game_state.pc_symbol, &game_state);
+                    refresh();
+                    usleep(1500000);
+                    
                     if (game_state.pc_wins == 2) {
                         game_state.game_end = true;
                     }
+
+                    prepare_new_round(&game_state);
             // check for tie
             } else if (game_state.number_of_turns == 9) {
                 usleep(1500000);
@@ -229,6 +275,7 @@ void start_tic_tac_toe(Player *pc){
 
             // change turn
             change_turn(&game_state);
+
         } else if (game_state.turn == NPC_TURN) {
             usleep(1000000);
 
@@ -245,18 +292,24 @@ void start_tic_tac_toe(Player *pc){
             // Have to place figure in the cell.
             char symbol = game_state.npc_symbol;
             game_state.cells_vector.at(input - 1) = symbol;
-            print_symbol(symbol, input);
+            print_symbol(symbol, input, &game_state, false);
             game_state.number_of_turns++;
 
             // check for win condition or tie
             if (check_win(game_state, symbol)) {
                 game_state.npc_wins++;
+                usleep(1000000);
+                
+                // paint winning sequence
+                paint_win_sequence(game_state.npc_symbol, &game_state);
+                refresh();
                 usleep(1500000);
-                prepare_new_round(&game_state);
 
                 if (game_state.npc_wins == 2) {
                     game_state.game_end = true;
                 }
+
+                prepare_new_round(&game_state);
             } else if (game_state.number_of_turns == 9) {
                 usleep(1500000);
                 prepare_new_round(&game_state);
@@ -264,9 +317,25 @@ void start_tic_tac_toe(Player *pc){
 
             // change_turn
             change_turn(&game_state);
-            
         }
     }
+
+    attron(COLOR_PAIR(11));
+
+    // print you win or you loose
+    if (game_state.game_end == true) {
+        if (game_state.pc_wins == 2) {
+            mvprintw(4, (SCR_WIDTH - strlen("You won!")) / 2, "You win!");
+        } else if (game_state.npc_wins == 2) {
+            mvprintw(4, (SCR_WIDTH - strlen("You lost!")) / 2, "You lost!");
+        }
+    }
+
+    mvprintw(SCR_HEIGHT - 3, (SCR_WIDTH - 1 - strlen("Press any key to exit: ") - 2) , "Press any key to exit: ");
+    refresh();
+    
+    attroff(COLOR_PAIR(11));
+    getch();
 
     clear();
 }
