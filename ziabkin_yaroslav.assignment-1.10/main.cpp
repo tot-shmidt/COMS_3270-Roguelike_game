@@ -319,8 +319,9 @@ int main(int argc, char *argv[]) {
                                 } else if (building_input == 'g' || building_input == 'G') {
                                     // start tic-tac-toe mini-game.
                                     start_tic_tac_toe(&pc);
-                                    mvprintw(23, 51, "Press '<' to exit.");
-                                    refresh();
+                                    break;
+                                    //mvprintw(22, 56, "Press '<' to exit.");
+                                    //refresh();
                                 }
                             }
 

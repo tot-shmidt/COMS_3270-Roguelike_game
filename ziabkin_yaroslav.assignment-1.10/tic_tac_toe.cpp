@@ -202,7 +202,7 @@ bool check_win(struct game_state & game_state, char symbol) {
 // Print in color winning sequence
 void paint_win_sequence(char symbol, struct game_state *game_state) {
     std::vector<char> * arr = &(game_state->cells_vector);
-    // Find winning cells
+    // Possible rows
     const int win_lines[8][3] = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
     
     for (int i = 0; i < 8; i++) {
@@ -215,6 +215,37 @@ void paint_win_sequence(char symbol, struct game_state *game_state) {
             break;
         }
     }
+}
+
+// Check for a sequence with 2 the same symbols
+int get_critical_cell(char symbol, struct game_state *game_state) {
+    // Shortcut variable
+    std::vector<char> *arr = &(game_state->cells_vector);
+    // Possible rows
+    const int win_lines[8][3] = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
+
+
+    for (int i = 0; i < 8; i++) {
+        int match_count = 0;
+        int empty_cell = -1;
+
+        for (int j = 0; j < 3; j++) {
+            if (arr->at(win_lines[i][j]) == symbol) {
+                match_count++;
+            } else if (arr->at(win_lines[i][j]) == ' ') {
+                empty_cell = win_lines[i][j];
+            }
+        }
+
+        // "empty_cell != -1" check here is crucial because the code above could count 2 matches, but empty_cell could stay -1 if that row is already blocked by the oponent.
+        // else if block above  will not update empty cell in such case. So, here we could have empty_cell = -1, and AI will not work fully, by not blocking.
+        if (match_count == 2 && empty_cell != -1) {
+            return empty_cell;
+        }
+    }
+
+    // No critical move found
+    return -1;
 }
 
 
@@ -279,20 +310,35 @@ void start_tic_tac_toe(Player *pc){
         } else if (game_state.turn == NPC_TURN) {
             usleep(1000000);
 
-            // find place for a move
-            bool valid_input = false;
-            int input;
-            while (!valid_input) {
-                input = rand() % 9 + 1;
-                if (game_state.cells_vector.at(input - 1) == ' ') {
-                    valid_input = true;
+            // Check if AI can win the game
+            int input = get_critical_cell(game_state.npc_symbol, &game_state);
+
+            // Check if AI can block
+            if (input == -1) {
+                input = get_critical_cell(game_state.pc_symbol, &game_state);
+            }
+
+            // Check if mid is available
+            if (input == -1 && game_state.cells_vector[4] == ' ') {
+                input = 4;
+            }
+
+            // Find a random spot if all above did not work
+            if (input == -1) {
+                bool valid_input = false;
+                while (!valid_input) {
+                    input = rand() % 9;
+                    if (game_state.cells_vector.at(input) == ' ') {
+                        valid_input = true;
+                    }
                 }
             }
 
             // Have to place figure in the cell.
             char symbol = game_state.npc_symbol;
-            game_state.cells_vector.at(input - 1) = symbol;
-            print_symbol(symbol, input, &game_state, false);
+
+            game_state.cells_vector.at(input) = symbol;
+            print_symbol(symbol, input+1, &game_state, false);
             game_state.number_of_turns++;
 
             // check for win condition or tie
